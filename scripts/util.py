@@ -43,7 +43,6 @@ def read_file(file_path, is_train=True):
     columns = ['name', 'text', 'label'] if is_train else ['name', 'text']
     return pd.DataFrame(result_array, columns=columns)
 
-
 def tokenize(texts):
     ExceptionsSet = {}
     for orth in EMOTICONS:
@@ -141,5 +140,3 @@ def f1(y_true, y_pred):
     precision = precision(y_true, y_pred)
     recall = recall(y_true, y_pred)
     return 2*((precision*recall)/(precision+recall+K.epsilon()))
-
-
