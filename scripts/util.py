@@ -1,39 +1,49 @@
 import pandas as pd
+import copy
+import os
+from pathlib2 import Path
 
 
 def refined(str):
     return str.replace('\"', '').replace('\n', '')
 
 
+def split_array(arr, condition):
+    if len(arr) == 0:
+        return []
+    result = []
+    accumulated = [arr[0]]
+    for ele in arr[1:]:
+        if condition(ele):
+            result.append(copy.deepcopy(accumulated))
+            accumulated = [copy.deepcopy(ele)]
+        else:
+            accumulated.append(copy.deepcopy(ele))
+    result.append(copy.deepcopy(accumulated))
+    return result
+
+
 def read_file(file_name, is_train=True):
     with open(file_name) as fp:
-        result_array = []
-        while True:
-            # Read name
-            data_name = fp.readline()
-            if (data_name == '\n'):
-                continue
-            if not data_name:
-                break
-            # Read text
-            text = ""
-            while text.count('\"') < 2:
-                line = fp.readline()
-                if (len(line) == 0):
-                    break
-                text += line
-            if (len(text) == 0):
-                break
-            data = [refined(data_name), refined(text)]
-            # Read label
-            if is_train:
-                label = fp.readline().replace('\"', '').replace('\n', '')
-                data.append(label)
-            result_array.append(data)
+        data_lines = filter(lambda x: x != '', fp.read().split('\n'))
+        pattern = 'train' if is_train else 'test'
+        datas = split_array(data_lines, lambda x: pattern in x)
+        if is_train:
+            result_array = map(
+                lambda x: [x[0], ' '.join(x[1:-1]), int(x[-1])], datas)
+        else:
+            result_array = map(
+                lambda x: [x[0], ' '.join(x[1:-1])], datas
+            )
         columns = ['name', 'text', 'label'] if is_train else [
             'name', 'text'
         ]
         return pd.DataFrame(result_array, columns=columns)
 
 
-print(read_file('train.crash', False)['text'][0])
+path = os.getcwd()
+if path.endswith('scripts'):
+    path = os.path.abspath('..')
+train_path = os.path.join(path, 'data/test.crash')
+print(read_file(train_path, False)
+      ['name'].describe())
