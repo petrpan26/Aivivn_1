@@ -13,7 +13,6 @@ from spacy.attrs import ORTH, LEMMA
 from .constant import EMOTICONS, DEFAULT_MAX_FEATURES
 from gensim.models.keyedvectors import KeyedVectors
 
-
 def split_array(arr, condition):
     if len(arr) == 0:
         return []
@@ -42,7 +41,6 @@ def read_file(file_path, is_train=True):
         result_array = list(map(lambda x: [x[0], ' '.join(x[1:])], datas))
     columns = ['name', 'text', 'label'] if is_train else ['name', 'text']
     return pd.DataFrame(result_array, columns=columns)
-
 
 def tokenize(texts):
     ExceptionsSet = {}
