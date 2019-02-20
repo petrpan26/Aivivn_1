@@ -127,3 +127,5 @@ o.0
 (╯°□°）╯︵┻━┻
 ><(((*>
 """.split())
+
+DEFAULT_MAX_FEATURES = 12000
