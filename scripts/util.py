@@ -58,7 +58,7 @@ def tokenize(texts):
     return np.array(docs)
 
 
-def make_embedding(texts, embedding_path, embed_size=300, max_features=DEFAULT_MAX_FEATURES):
+def make_embedding(texts, embedding_path, max_features):
     embedding_path = abspath(embedding_path)
 
     def get_coefs(word, *arr):
@@ -72,6 +72,7 @@ def make_embedding(texts, embedding_path, embed_size=300, max_features=DEFAULT_M
         embedding_index = KeyedVectors.load_word2vec_format(
             embedding_path, binary=True)
         mean_embedding = np.mean(embedding_index.vectors, axis=0)
+    embed_size = mean_embedding.shape[0]
     word_index = {word.lower() for sentence in texts for word in sentence}
     nb_words = min(max_features, len(word_index))
     embedding_matrix = np.zeros((nb_words + 1, embed_size))
@@ -87,7 +88,7 @@ def make_embedding(texts, embedding_path, embed_size=300, max_features=DEFAULT_M
         word_map[word] = i
         i += 1
     embedding_matrix[-1] = mean_embedding
-    return word_map, embedding_matrix
+    return embed_size, word_map, embedding_matrix
 
 def text_to_sequences(texts, word_map, max_len=DEFAULT_MAX_LENGTH):
     texts_id = []
