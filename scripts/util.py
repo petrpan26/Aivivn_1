@@ -1,7 +1,7 @@
 import pandas as pd
 import copy
 import os
-from pathlib2 import Path
+from pathlib import Path
 
 
 def split_array(arr, condition):
@@ -20,7 +20,8 @@ def split_array(arr, condition):
 
 
 def read_file(file_name, is_train=True):
-    data_lines = filter(lambda x: x != '', open(file_name).read().split('\n'))
+    data_lines = list(
+        filter(lambda x: x != '', open(file_name).read().split('\n')))
     pattern = 'train' if is_train else 'test'
     datas = split_array(data_lines, lambda x: pattern in x)
     if is_train:
