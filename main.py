@@ -1,4 +1,5 @@
 from scripts.util import read_file, tokenize, make_embedding, text_to_sequences
+import numpy as np
 from scripts.rnn import RNNKeras
 from scripts.constant import DEFAULT_MAX_FEATURES
 from sklearn.model_selection import train_test_split
