@@ -49,12 +49,9 @@ def tokenize(texts):
 
 
     nlp = Vietnamese()
-    tokenizer = nlp.create_pipe("tokenizer")
-    for emoticon in EMOTICONS:
-        tokenizer.add_special_case(emoticon, ExceptionsSet[emoticon])
     docs = []
     for text in texts:
-        tokens = np.array([token.text for token in tokenizer(text)[1:-1]])
+        tokens = np.array([token.text for token in nlp(text.lower())[1:-1]])
         docs.append(tokens)
 
     return np.array(docs)
