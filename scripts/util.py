@@ -9,7 +9,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from os.path import abspath
 from spacy.lang.vi import Vietnamese
-from spacy.attrs import ORTH, LEMMA
+from spacy.attrs import ORTH
 from .constant import EMOTICONS, DEFAULT_MAX_FEATURES
 from gensim.models.keyedvectors import KeyedVectors
 
