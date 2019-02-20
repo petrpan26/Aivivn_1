@@ -36,7 +36,7 @@ def read_file(file_path, is_train=True):
         result_array = list(map(
             lambda x: [x[0], ' '.join(x[1:-1]), int(x[-1])], datas))
     else:
-        result_array = list(map(lambda x: [x[0], ' '.join(x[1:-1])], datas))
+        result_array = list(map(lambda x: [x[0], ' '.join(x[1:])], datas))
     columns = ['name', 'text', 'label'] if is_train else ['name', 'text']
     return pd.DataFrame(result_array, columns=columns)
 
