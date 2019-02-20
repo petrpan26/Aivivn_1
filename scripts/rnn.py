@@ -9,7 +9,7 @@ from keras import initializers, regularizers, constraints, optimizers, layers
 import keras.backend as K
 
 
-def RNNKeras(embeddingMatrix = None, embed_size = 100, max_features = 20000, maxlen = 100):
+def RNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100):
     inp = Input(shape = (maxlen, ))
     x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix])(inp)
     x = Bidirectional(GRU(50, return_sequences = True))(x)
