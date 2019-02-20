@@ -14,6 +14,7 @@ from .constant import EMOTICONS, DEFAULT_MAX_FEATURES, DEFAULT_MAX_LENGTH
 from gensim.models.keyedvectors import KeyedVectors
 from sklearn.metrics import f1_score
 
+
 def split_array(arr, condition):
     if len(arr) == 0:
         return []
@@ -43,11 +44,11 @@ def read_file(file_path, is_train=True):
     columns = ['name', 'text', 'label'] if is_train else ['name', 'text']
     return pd.DataFrame(result_array, columns=columns)
 
+
 def tokenize(texts):
     ExceptionsSet = {}
     for orth in EMOTICONS:
         ExceptionsSet[orth] = [{ORTH: orth}]
-
 
     nlp = Vietnamese()
     docs = []
@@ -141,3 +142,9 @@ def f1(y_true, y_pred):
     precision = precision(y_true, y_pred)
     recall = recall(y_true, y_pred)
     return 2*((precision*recall)/(precision+recall+K.epsilon()))
+
+def predictions_to_submission(test_data, predictor):
+    tqdm.pandas()
+    submission = test_data[['id']]
+    submission['label'] = test_data['text'].progress_apply(predictor)
+    return submission
