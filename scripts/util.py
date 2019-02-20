@@ -69,7 +69,7 @@ def make_embedding(texts, embedding_path, embed_size=300, max_features=DEFAULT_M
         mean_embedding = np.mean(np.array(list(embedding_index.values())))
     elif embedding_path.endswith('bin'):
         embedding_index = KeyedVectors.load_word2vec_format(
-            'path/to/GoogleNews-vectors-negative300.bin', binary=True)
+            embedding_path, binary=True)
         mean_embedding = np.mean(embedding_index.vectors, axis=0)
 
     word_index = {word.lower() for sentence in texts for word in sentence}
