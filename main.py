@@ -8,10 +8,6 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
 
-
-
-
-
 data = read_file("./data/train.crash")
 tokenized_texts = tokenize(data["text"])
 labels = data["label"].values.astype(np.float16).reshape(-1, 1)
@@ -23,19 +19,9 @@ word_map, embedding_mat = make_embedding(
     embed_size = 400
 )
 
-def text_to_sequences_test(texts, word_map, max_len = 100):
-    texts_id = []
-    for sentence in texts:
-        sentence = [word_map[word.lower()] for word in sentence[:min(max_len, sentence.shape[0])]]
-        if len(sentence) < max_len:
-            sentence = np.pad(sentence, (0, max_len - len(sentence)), 'constant', constant_values = 0)
-        texts_id.append(sentence)
-
-    return np.array(texts_id)
 
 
-
-texts_id = text_to_sequences_test(tokenized_texts, word_map)
+texts_id = text_to_sequences(tokenized_texts, word_map)
 print(labels.shape)
 print(texts_id.shape)
 
