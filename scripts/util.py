@@ -47,6 +47,7 @@ def tokenize(texts):
     for orth in EMOTICONS:
         ExceptionsSet[orth] = [{ORTH: orth}]
 
+
     nlp = Vietnamese()
     tokenizer = nlp.create_pipe("tokenizer")
     for emoticon in EMOTICONS:
