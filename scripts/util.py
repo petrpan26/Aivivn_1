@@ -2,9 +2,10 @@ import pandas as pd
 import copy
 import os
 import numpy as np
+import re
+
 from collections import defaultdict
 from os.path import abspath
-
 from spacy.lang.vi import Vietnamese
 from spacy.attrs import ORTH, LEMMA
 from .constant import EMOTICONS, DEFAULT_MAX_FEATURES
@@ -30,8 +31,8 @@ def read_file(file_path, is_train=True):
     file_path = abspath(file_path)
     data_lines = list(
         filter(lambda x: x != '', open(file_path).read().split('\n')))
-    pattern = 'train' if is_train else 'test'
-    datas = split_array(data_lines, lambda x: pattern in x)
+    pattern = ('train' if is_train else 'test') + '_[0-9]{5}'
+    datas = split_array(data_lines, lambda x: bool(re.match(pattern, x)))
     if is_train:
         result_array = list(map(
             lambda x: [x[0], ' '.join(x[1:-1]), int(x[-1])], datas))
