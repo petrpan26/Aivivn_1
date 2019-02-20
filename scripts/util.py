@@ -1,7 +1,12 @@
 import pandas as pd
 import copy
 import os
-from pathlib import Path
+import numpy as np
+
+from spacy.lang.vi import Vietnamese
+from spacy.attrs import ORTH, LEMMA
+from .constant import EMOTICONS
+
 
 
 def split_array(arr, condition):
@@ -31,3 +36,21 @@ def read_file(file_name, is_train=True):
         result_array = map(lambda x: [x[0], ' '.join(x[1:-1])], datas)
     columns = ['name', 'text', 'label'] if is_train else ['name', 'text']
     return pd.DataFrame(result_array, columns=columns)
+
+
+def tokenize(texts):
+    ExceptionsSet = {}
+    for orth in EMOTICONS:
+        ExceptionsSet[orth] = [{ORTH: orth}]
+
+
+    nlp = Vietnamese()
+    tokenizer = nlp.create_pipe("tokenizer")
+    for emoticon in EMOTICONS:
+        tokenizer.add_special_case(emoticon, ExceptionsSet[emoticon])
+    docs = []
+    for text in texts:
+        tokens = np.array([token.text for token in tokenizer(text)[1:-1]])
+        docs.append(tokens)
+
+    return np.array(docs)
