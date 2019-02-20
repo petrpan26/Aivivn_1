@@ -127,8 +127,5 @@ o.0
 (╯°□°）╯︵┻━┻
 ><(((*>
 """.split())
-<<<<<<< HEAD
 
 DEFAULT_MAX_FEATURES = 12000
-=======
->>>>>>> add constant file.
