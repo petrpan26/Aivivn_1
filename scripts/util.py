@@ -4,6 +4,8 @@ import os
 import numpy as np
 import re
 
+
+from tqdm import tqdm
 from collections import defaultdict
 from os.path import abspath
 from spacy.lang.vi import Vietnamese
@@ -100,3 +102,10 @@ def make_embedding(texts, embedding_path, embed_size=300, max_features=DEFAULT_M
 
 def text_to_sequences(texts, word_map):
     return np.array([np.array([word_map[word.lower()] for word in sentence]) for sentence in texts])
+
+
+def predictions_to_submission(test_data, predictor):
+    tqdm.pandas()
+    submission = test_data[['id']]
+    submission['label'] = test_data['text'].progress_apply(predictor)
+    return submission
