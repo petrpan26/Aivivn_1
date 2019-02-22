@@ -1,3 +1,7 @@
+pyvi
 pandas>=0.24.1
 spacy>=2.0.18
 gensim>=3.7.1
+scikit-learn>=0.20.2
+keras
+tensorflow

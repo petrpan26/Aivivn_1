@@ -3,16 +3,16 @@ import copy
 import os
 import numpy as np
 import re
-
+import keras.backend as K
 
 from tqdm import tqdm
 from collections import defaultdict
 from os.path import abspath
 from spacy.lang.vi import Vietnamese
-from spacy.attrs import ORTH, LEMMA
-from .constant import EMOTICONS, DEFAULT_MAX_FEATURES
+from spacy.attrs import ORTH
+from .constant import EMOTICONS, DEFAULT_MAX_FEATURES, DEFAULT_MAX_LENGTH
 from gensim.models.keyedvectors import KeyedVectors
-
+from sklearn.metrics import f1_score
 
 def split_array(arr, condition):
     if len(arr) == 0:
@@ -50,22 +50,20 @@ def tokenize(texts):
         ExceptionsSet[orth] = [{ORTH: orth}]
 
     nlp = Vietnamese()
-    tokenizer = nlp.create_pipe("tokenizer")
-    for emoticon in EMOTICONS:
-        tokenizer.add_special_case(emoticon, ExceptionsSet[emoticon])
     docs = []
     for text in texts:
-        tokens = np.array([token.text for token in tokenizer(text)[1:-1]])
+        tokens = np.array([token.text for token in nlp(text.lower())[1:-1]])
         docs.append(tokens)
 
     return np.array(docs)
 
 
-def make_embedding(texts, embedding_path, embed_size=300, max_features=DEFAULT_MAX_FEATURES):
+def make_embedding(texts, embedding_path, max_features):
     embedding_path = abspath(embedding_path)
 
     def get_coefs(word, *arr):
         return word, np.asarray(arr, dtype='float32')
+
     if embedding_path.endswith('.vec'):
         embedding_index = dict(get_coefs(*o.strip().split(" "))
                                for o in open(embedding_path))
@@ -74,17 +72,12 @@ def make_embedding(texts, embedding_path, embed_size=300, max_features=DEFAULT_M
         embedding_index = KeyedVectors.load_word2vec_format(
             embedding_path, binary=True)
         mean_embedding = np.mean(embedding_index.vectors, axis=0)
-
+    embed_size = mean_embedding.shape[0]
     word_index = {word.lower() for sentence in texts for word in sentence}
-
     nb_words = min(max_features, len(word_index))
-
     embedding_matrix = np.zeros((nb_words + 1, embed_size))
-
     i = 0
-
     word_map = defaultdict(lambda: nb_words)
-
     for word in word_index:
         if i >= max_features:
             continue
@@ -94,18 +87,59 @@ def make_embedding(texts, embedding_path, embed_size=300, max_features=DEFAULT_M
             embedding_matrix[i] = mean_embedding
         word_map[word] = i
         i += 1
-
     embedding_matrix[-1] = mean_embedding
+    return embed_size, word_map, embedding_matrix
 
-    return word_map, embedding_matrix
+def text_to_sequences(texts, word_map, max_len=DEFAULT_MAX_LENGTH):
+    texts_id = []
+    for sentence in texts:
+        sentence = [word_map[word.lower()] for word in sentence][:max_len]
+        padded_setence = np.pad(
+            sentence, (0, max(0, max_len - len(sentence))), 'constant', constant_values=0)
+        texts_id.append(padded_setence)
+    return np.array(texts_id)
+
+def find_threshold(pred_proba, y_true, metric = f1_score):
+    cur_acc = 0
+    cur_thres = 0
+    for ind in range(pred_proba.shape[0] - 1):
+        threshold = (pred_proba[ind][0] + pred_proba[ind + 1][0]) / 2
+        pred = (pred_proba > threshold).astype(np.int8)
+        acc = metric(pred, y_true)
+        if acc > cur_acc:
+            cur_thres = threshold
+            cur_acc = acc
+
+    return cur_thres
+
+def f1(y_true, y_pred):
+    def recall(y_true, y_pred):
+        """Recall metric.
+
+        Only computes a batch-wise average of recall.
+
+        Computes the recall, a metric for multi-label classification of
+        how many relevant items are selected.
+        """
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+        recall = true_positives / (possible_positives + K.epsilon())
+        return recall
+
+    def precision(y_true, y_pred):
+        """Precision metric.
+
+        Only computes a batch-wise average of precision.
+
+        Computes the precision, a metric for multi-label classification of
+        how many selected items are relevant.
+        """
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+        precision = true_positives / (predicted_positives + K.epsilon())
+        return precision
+    precision = precision(y_true, y_pred)
+    recall = recall(y_true, y_pred)
+    return 2*((precision*recall)/(precision+recall+K.epsilon()))
 
 
-def text_to_sequences(texts, word_map):
-    return np.array([np.array([word_map[word.lower()] for word in sentence]) for sentence in texts])
-
-
-def predictions_to_submission(test_data, predictor):
-    tqdm.pandas()
-    submission = test_data[['id']]
-    submission['label'] = test_data['text'].progress_apply(predictor)
-    return submission
