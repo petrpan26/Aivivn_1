@@ -3,40 +3,56 @@ from scripts.rnn import RNNKeras
 from scripts.constant import DEFAULT_MAX_FEATURES
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from scripts.rnn import RNNKeras
+from scripts.rnn import RNNKeras, RNNKerasCPU
 import argparse
+import os
 import numpy as np
 import datetime
+import pandas as pd
+from scripts.util import find_threshold
+from sklearn.metrics import f1_score
 
 
 def train_model(model, embedding_path, max_features=DEFAULT_MAX_FEATURES):
     model_name = '-'.join(
         '.'.join(str(datetime.datetime.now()).split('.')[:-1]).split(' '))
 
-    data = read_file('./data/train.crash')
-    tokenized_texts = tokenize(data['text'])
-    labels = data['label'].values.astype(np.float16).reshape(-1, 1)
+    train_data = read_file('./data/train.crash')
+    test_data = read_file('./data/test.crash', is_train=False)
+    train_tokenized_texts = tokenize(train_data['text'])
+    test_tokenizes_texts = tokenize(test_data['text'])
+    labels = train_data['label'].values.astype(np.float16).reshape(-1, 1)
 
     embed_size, word_map, embedding_mat = make_embedding(
-        tokenized_texts,
+        list(train_tokenized_texts) + list(test_tokenizes_texts),
         embedding_path,
         max_features
     )
 
-    texts_id = text_to_sequences(tokenized_texts, word_map)
-    print(labels.shape)
-    print(texts_id.shape)
+    texts_id = text_to_sequences(train_tokenized_texts, word_map)
+    print('Number of train data: {}'.format(labels.shape))
 
     texts_id_train, texts_id_val, labels_train, labels_val = train_test_split(
         texts_id, labels, test_size=0.1)
 
+    model_path = './models/{}-version'.format(model_name)
+
+    try:
+        os.mkdir('./models')
+    except:
+        print('Folder already created')
+    try:
+        os.mkdir(model_path)
+    except:
+        print('Folder already created')
+
     checkpoint = ModelCheckpoint(
-        filepath='./Weights/{}-version.hdf5'.format(model_name),
-        monitor='val_acc', verbose=1,
-        mode='min',
+        filepath='{}/models.hdf5'.format(model_path),
+        monitor='val_f1', verbose=1,
+        mode='max',
         save_best_only=True
     )
-    early = EarlyStopping(monitor='val_acc', mode='min', patience=3)
+    early = EarlyStopping(monitor='val_f1', mode='max', patience=3)
     callbacks_list = [checkpoint, early]
     batch_size = 16
     epochs = 100
@@ -44,7 +60,7 @@ def train_model(model, embedding_path, max_features=DEFAULT_MAX_FEATURES):
     model = model(
         embeddingMatrix=embedding_mat,
         embed_size=embed_size,
-        max_features=len(embedding_mat)
+        max_features=embedding_mat.shape[0]
     )
     model.fit(
         texts_id_train, labels_train,
@@ -54,9 +70,28 @@ def train_model(model, embedding_path, max_features=DEFAULT_MAX_FEATURES):
         batch_size=16
     )
 
+    model.load_weights('{}/models.hdf5'.format(model_path))
+    prediction_prob = model.predict(texts_id_val)
+    OPTIMAL_THRESHOLD = find_threshold(prediction_prob, labels_val)
+    print('OPTIMAL_THRESHOLD: {}'.format(OPTIMAL_THRESHOLD))
+    prediction = (prediction_prob > OPTIMAL_THRESHOLD).astype(np.int8)
+    print('F1 validation score: {}'.format(f1_score(prediction, labels_val)))
+    with open('{}/f1'.format(model_path), 'w') as fp:
+        fp.write(str(f1_score(prediction, labels_val)))
+
+    test_id_texts = text_to_sequences(test_tokenizes_texts, word_map)
+    test_prediction = model.predict(test_id_texts)
+
+    df_predicton = pd.read_csv("./data/sample_submission.csv")
+    df_predicton["label"] = (
+        test_prediction > OPTIMAL_THRESHOLD).astype(np.int8)
+    print('Number of test data: {}'.format(df_predicton.shape[0]))
+    df_predicton.to_csv('{}/prediction.csv'.format(model_path), index=False)
+
 
 model_dict = {
-    'RNNKeras': RNNKeras
+    'RNNKeras': RNNKeras,
+    'RNNKerasCPU': RNNKerasCPU
 }
 
 if __name__ == '__main__':
@@ -65,7 +100,7 @@ if __name__ == '__main__':
         '-m',
         '--model',
         help='Model use',
-        default='RNNKeras'
+        default='RNNKerasCPU'
     )
     parser.add_argument(
         '-e',
