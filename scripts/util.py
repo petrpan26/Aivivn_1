@@ -148,3 +148,16 @@ def predictions_to_submission(test_data, predictor):
     submission = test_data[['id']]
     submission['label'] = test_data['text'].progress_apply(predictor)
     return submission
+
+def find_threshold(pred_proba, y_true, metric = f1_score):
+    cur_acc = 0
+    cur_thres = 0
+    for ind in range(pred_proba.shape[0] - 1):
+        threshold = (pred_proba[ind][0] + pred_proba[ind + 1][0]) / 2
+        pred = (pred_proba > threshold).astype(np.int8)
+        acc = metric(pred, y_true)
+        if acc > cur_acc:
+            cur_thres = threshold
+            cur_acc = acc
+
+    return cur_thres
