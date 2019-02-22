@@ -3,7 +3,7 @@ from scripts.rnn import RNNKeras
 from scripts.constant import DEFAULT_MAX_FEATURES
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from scripts.rnn import RNNKeras, RNNKerasCPU
+from scripts.rnn import RNNKeras, RNNKerasCPU, LSTMKeras
 import argparse
 import os
 import numpy as np
@@ -91,7 +91,8 @@ def train_model(model, embedding_path, max_features=DEFAULT_MAX_FEATURES):
 
 model_dict = {
     'RNNKeras': RNNKeras,
-    'RNNKerasCPU': RNNKerasCPU
+    'RNNKerasCPU': RNNKerasCPU,
+    'LSTMKeras': LSTMKeras
 }
 
 if __name__ == '__main__':
