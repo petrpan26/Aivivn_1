@@ -108,7 +108,12 @@ if __name__ == '__main__':
         help='Model use',
         default='./embeddings/smallFasttext.vi.vec'
     )
+    parser.add_argument(
+        '--max',
+        help='Model use',
+        default=DEFAULT_MAX_FEATURES
+    )
     args = parser.parse_args()
     if not args.model in model_dict:
         raise RuntimeError('Model not found')
-    train_model(model_dict[args.model], args.embedding)
+    train_model(model_dict[args.model], args.embedding, int(args.max))
