@@ -13,7 +13,7 @@ from scripts.util import find_threshold
 from sklearn.metrics import f1_score
 
 
-def train_model(model, embedding_path, max_features=DEFAULT_MAX_FEATURES):
+def train_model(model, embedding_path, max_features, should_mix):
     model_name = '-'.join(
         '.'.join(str(datetime.datetime.now()).split('.')[:-1]).split(' '))
 
@@ -24,7 +24,8 @@ def train_model(model, embedding_path, max_features=DEFAULT_MAX_FEATURES):
     labels = train_data['label'].values.astype(np.float16).reshape(-1, 1)
 
     embed_size, word_map, embedding_mat = make_embedding(
-        list(train_tokenized_texts) + list(test_tokenizes_texts),
+        list(train_tokenized_texts) +
+        list(test_tokenizes_texts) if should_mix else train_tokenized_texts,
         embedding_path,
         max_features
     )
@@ -114,7 +115,13 @@ if __name__ == '__main__':
         help='Model use',
         default=DEFAULT_MAX_FEATURES
     )
+    parser.add_argument(
+        '--mix',
+        action='store_true',
+        help='Model use'
+    )
     args = parser.parse_args()
     if not args.model in model_dict:
         raise RuntimeError('Model not found')
-    train_model(model_dict[args.model], args.embedding, int(args.max))
+    train_model(model_dict[args.model], args.embedding,
+                int(args.max), args.mix)
