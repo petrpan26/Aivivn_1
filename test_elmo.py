@@ -154,7 +154,7 @@ texts_test = to_length(texts_test, 100)
 
 texts_train, texts_val, labels_train, labels_val = train_test_split(
     texts, labels,
-    test_size = 0.1
+    test_size = 0.05
 )
 
 
@@ -168,8 +168,8 @@ early = EarlyStopping(monitor = "val_f1", mode = "max", patience = 3)
 callbacks_list = [checkpoint, early]
 
 train_seq = TrainSeq(texts_train, labels_train, batch_size = batch_size)
-val_seq = TrainSeq(texts_val, labels_val, batch_size = len(labels_val))
-test_seq = TestSeq(texts_test, batch_size = len(texts_test))
+val_seq = TrainSeq(texts_val, labels_val, batch_size = batch_size)
+test_seq = TestSeq(texts_test, batch_size = batch_size)
 
 
 model = RNNKerasCPUNoEmbedding()
