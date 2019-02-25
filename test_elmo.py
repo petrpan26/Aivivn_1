@@ -66,10 +66,6 @@ class TrainSeq(Sequence):
         return len(self._X) // self._batch_size
 
     def __getitem__(self, idx):
-        print(idx)
-        print(self._X[idx * self._batch_size:(idx + 1) * self._batch_size].shape)
-        # print(np.array(elmo.sents2elmo(self._X[idx * self._batch_size:(idx + 1) * self._batch_size])).shape)
-        # print(self._y[idx * self._batch_size:(idx + 1) * self._batch_size].shape)
         return np.array(elmo.sents2elmo(self._X[idx * self._batch_size:(idx + 1) * self._batch_size])), \
                self._y[idx * self._batch_size:(idx + 1) * self._batch_size]
 
