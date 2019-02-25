@@ -38,7 +38,7 @@ elmo = Embedder(elmo_path, batch_size = batch_size)
 
 def to_length(texts, length):
     def pad_func(vector, pad_width, iaxis, kwargs):
-        str = kwargs.get('padder', '<unk>')
+        str = kwargs.get('padder', '<pad>')
         vector[:pad_width[0]] = str
         vector[-pad_width[1]:] = str
         return vector
@@ -61,13 +61,17 @@ class TrainSeq(Sequence):
     def __init__(self, X, y, batch_size):
         self._X, self._y = X, y
         self._batch_size = batch_size
+        self._indices = np.arange(len(self._X))
 
     def __len__(self):
         return len(self._X) // self._batch_size
 
     def __getitem__(self, idx):
-        return np.array(elmo.sents2elmo(self._X[idx * self._batch_size:(idx + 1) * self._batch_size])), \
-               self._y[idx * self._batch_size:(idx + 1) * self._batch_size]
+        id = self._indices[idx * self._batch_size:(idx + 1) * self._batch_size]
+        return np.array(elmo.sents2elmo(self._X[id])), self._y[id]
+
+    def on_epoch_end(self):
+        np.random.shuffle(self._indices)
 
 
 class TestSeq(Sequence):
@@ -164,8 +168,8 @@ early = EarlyStopping(monitor = "val_f1", mode = "max", patience = 3)
 callbacks_list = [checkpoint, early]
 
 train_seq = TrainSeq(texts_train, labels_train, batch_size = batch_size)
-val_seq = TrainSeq(texts_val, labels_val, batch_size = batch_size)
-test_seq = TestSeq(texts_test, batch_size = batch_size)
+val_seq = TrainSeq(texts_val, labels_val, batch_size = min(batch_size, len(texts_val)))
+test_seq = TestSeq(texts_test, batch_size = 1)
 
 
 model = RNNKerasCPUNoEmbedding()
@@ -196,5 +200,4 @@ print(f1_score(
 prediction_test = model.predict_generator(test_seq, workers = False)
 df_predicton = pd.read_csv("./data/sample_submission.csv")
 df_predicton["label"] = (prediction_test > OPTIMAL_THRESHOLD).astype(np.int8)
-print(df_predicton.shape[0])
 df_predicton.to_csv("./prediction/prediction_elmo.csv", index = False)
