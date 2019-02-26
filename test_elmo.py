@@ -36,6 +36,7 @@ epochs = 100
 
 elmo = Embedder(elmo_path, batch_size = batch_size)
 
+
 def to_length(texts, length):
     def pad_func(vector, pad_width, iaxis, kwargs):
         str = kwargs.get('padder', '<pad>')
@@ -168,7 +169,7 @@ early = EarlyStopping(monitor = "val_f1", mode = "max", patience = 3)
 callbacks_list = [checkpoint, early]
 
 train_seq = TrainSeq(texts_train, labels_train, batch_size = batch_size)
-val_seq = TrainSeq(texts_val, labels_val, batch_size = min(batch_size, len(texts_val)))
+val_seq = TrainSeq(texts_val, labels_val, batch_size = 1)
 test_seq = TestSeq(texts_test, batch_size = 1)
 
 
