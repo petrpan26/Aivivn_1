@@ -3,7 +3,7 @@ from scripts.rnn import RNNKeras
 from scripts.constant import DEFAULT_MAX_FEATURES
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from scripts.rnn import RNNKeras, RNNKerasCPU, LSTMKeras, SARNNKerasCPU
+from scripts.rnn import RNNKeras, RNNKerasCPU, LSTMKeras, SARNNKerasCPU, SARNNKeras
 import argparse
 import os
 import numpy as np
@@ -34,7 +34,7 @@ def train_model(model, embedding_path, max_features, should_mix):
     print('Number of train data: {}'.format(labels.shape))
 
     texts_id_train, texts_id_val, labels_train, labels_val = train_test_split(
-        texts_id, labels, test_size=0.1)
+        texts_id, labels, test_size=0.05)
 
     model_path = './models/{}-version'.format(model_name)
 
@@ -94,7 +94,8 @@ model_dict = {
     'RNNKeras': RNNKeras,
     'RNNKerasCPU': RNNKerasCPU,
     'LSTMKeras': LSTMKeras,
-    'SARNNKerasCPU': SARNNKerasCPU
+    'SARNNKerasCPU': SARNNKerasCPU,
+    'SARNNKeras': SARNNKeras
 }
 
 if __name__ == '__main__':
