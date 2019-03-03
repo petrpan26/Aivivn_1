@@ -8,10 +8,12 @@ import random as rn
 import pandas as pd
 
 
-from keras.models import Model, load_model, model_from_json
-from keras.layers import Dense, Embedding, Input, GRU, Bidirectional, GlobalMaxPool1D, Dropout
+
+from keras.models import Model
+from keras.layers import Dense, Embedding, Input, GRU, LSTM, Bidirectional, GlobalMaxPool1D, Dropout, Lambda
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 import keras.backend as K
+from keras_self_attention import SeqSelfAttention, SeqWeightedAttention
 
 # np random seed:
 np.random.seed(22)
@@ -22,15 +24,34 @@ rn.seed(1254)
 # # Setting the graph-level random seed.
 tf.set_random_seed(89)
 
+def SARNNKerasCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100):
+    inp = Input(shape = (maxlen, ))
+    x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix])(inp)
+    x = Bidirectional(LSTM(128, return_sequences = True))(x)
+    x = SeqSelfAttention(
+        attention_type = SeqSelfAttention.ATTENTION_TYPE_MUL,
+        attention_regularizer_weight=1e-4,
+    )(x)
+    x = Dropout(0.5)(x)
+    x = Bidirectional(LSTM(128, return_sequences = True))(x)
+    x = SeqWeightedAttention()(x)
+    x = Dropout(0.5)(x)
+    x = Dense(64, activation = "relu")(x)
+    x = Dropout(0.5)(x)
+    x = Dense(1, activation = "sigmoid")(x)
+    model = Model(inputs = inp, outputs = x)
+    model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
+    return model
+
+
 def RNNKerasCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100):
     inp = Input(shape = (maxlen, ))
     x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix])(inp)
-    x = Bidirectional(GRU(128, return_sequences = True))(x)
+    x = Bidirectional(LSTM(128, return_sequences = True))(x)
     x = Dropout(0.5)(x)
-    x = Bidirectional(GRU(128, return_sequences = True))(x)
+    x = Bidirectional(LSTM(128, return_sequences = True))(x)
     x = Dropout(0.5)(x)
     x = GlobalMaxPool1D()(x)
-    x = Dropout(0.5)(x)
     x = Dense(64, activation = "relu")(x)
     x = Dropout(0.5)(x)
     x = Dense(1, activation = "sigmoid")(x)
@@ -83,7 +104,7 @@ labels = data["label"].values.astype(np.float16).reshape(-1, 1)
 embed_size, word_map, embedding_mat = make_embedding(
     tokenized_texts,
     embedding_path = "./data/baomoi.model.bin",
-    max_features =  DEFAULT_MAX_FEATURES
+    max_features =  40000
 )
 
 
@@ -98,7 +119,7 @@ texts_id_train, texts_id_val, labels_train, labels_val = train_test_split(
 )
 
 checkpoint = ModelCheckpoint(
-    filepath = "./Weights/model_2.hdf5",
+    filepath = "./Weights/model_sa_2.hdf5",
     monitor = 'val_f1', verbose = 1,
     mode = 'max',
     save_best_only = True
@@ -109,7 +130,7 @@ batch_size = 16
 epochs = 100
 
 
-model = RNNKerasCPU(
+model = SARNNKerasCPU(
     embeddingMatrix = embedding_mat,
     embed_size = 400,
     max_features = embedding_mat.shape[0]
@@ -125,13 +146,16 @@ model.fit(
 
 
 
-model.load_weights("./Weights/model_2.hdf5")
+model.load_weights("./Weights/model_sa_2.hdf5")
 prediction_prob = model.predict(texts_id_val)
 
 OPTIMAL_THRESHOLD = find_threshold(prediction_prob, labels_val)
 print(OPTIMAL_THRESHOLD)
 prediction = (prediction_prob > OPTIMAL_THRESHOLD).astype(np.int8)
-print(prediction)
+print(f1_score(
+    y_true = labels_val.reshape(-1),
+    y_pred = prediction.reshape(-1)
+))
 
 
 
@@ -142,4 +166,4 @@ prediction_test = model.predict(texts_id_test)
 df_predicton = pd.read_csv("./data/sample_submission.csv")
 df_predicton["label"] = (prediction_test > OPTIMAL_THRESHOLD).astype(np.int8)
 print(df_predicton.shape[0])
-df_predicton.to_csv("./prediction/prediction.csv", index = False)
+df_predicton.to_csv("./prediction/prediction_sa_2.csv", index = False)
