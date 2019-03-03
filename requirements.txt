@@ -5,3 +5,4 @@ gensim>=3.7.1
 scikit-learn>=0.20.2
 keras
 tensorflow
+keras-self-attention==0.34.0
