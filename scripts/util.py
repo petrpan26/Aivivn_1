@@ -13,6 +13,7 @@ from spacy.attrs import ORTH
 from .constant import EMOTICONS, DEFAULT_MAX_FEATURES, DEFAULT_MAX_LENGTH
 from gensim.models.keyedvectors import KeyedVectors
 from sklearn.metrics import f1_score
+import string
 
 
 def split_array(arr, condition):
@@ -53,10 +54,20 @@ def tokenize(texts):
     nlp = Vietnamese()
     docs = []
     for text in texts:
-        tokens = np.array([token.text for token in nlp(text.lower())[1:-1]])
+        tokens = np.array([postprocess_token(token.text) for token in nlp(text.lower())[1:-1]])
         docs.append(tokens)
 
     return np.array(docs)
+
+
+def postprocess_token(token):
+    if token in string.punctuation:
+        return '<punct>'
+    elif token in string.digits:
+        return '<number>'
+    else:
+        return token
+
 
 
 def make_embedding(texts, embedding_path, max_features):
@@ -103,7 +114,7 @@ def text_to_sequences(texts, word_map, max_len=DEFAULT_MAX_LENGTH):
 def find_threshold(pred_proba, y_true, metric = f1_score):
     cur_acc = 0
     cur_thres = 0
-    for ind in range(pred_proba.shape[0] - 1):
+    for ind in range(len(pred_proba) - 1):
         threshold = (pred_proba[ind][0] + pred_proba[ind + 1][0]) / 2
         pred = (pred_proba > threshold).astype(np.int8)
         acc = metric(pred, y_true)
