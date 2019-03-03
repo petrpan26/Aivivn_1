@@ -3,7 +3,7 @@ from scripts.rnn import RNNKeras
 from scripts.constant import DEFAULT_MAX_FEATURES
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from scripts.rnn import RNNKeras, RNNKerasCPU, LSTMKeras
+from scripts.rnn import RNNKeras, RNNKerasCPU, LSTMKeras, SARNNKerasCPU
 import argparse
 import os
 import numpy as np
@@ -68,7 +68,7 @@ def train_model(model, embedding_path, max_features, should_mix):
         validation_data=(texts_id_val, labels_val),
         callbacks=callbacks_list,
         epochs=epochs,
-        batch_size=16
+        batch_size=batch_size
     )
 
     model.load_weights('{}/models.hdf5'.format(model_path))
@@ -93,7 +93,8 @@ def train_model(model, embedding_path, max_features, should_mix):
 model_dict = {
     'RNNKeras': RNNKeras,
     'RNNKerasCPU': RNNKerasCPU,
-    'LSTMKeras': LSTMKeras
+    'LSTMKeras': LSTMKeras,
+    'SARNNKerasCPU': SARNNKerasCPU
 }
 
 if __name__ == '__main__':
