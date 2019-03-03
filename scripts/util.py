@@ -63,7 +63,7 @@ def tokenize(texts):
 def postprocess_token(token):
     if token in string.punctuation:
         return '<punct>'
-    elif token in string.digits:
+    elif token.isdigit():
         return '<number>'
     else:
         return token
