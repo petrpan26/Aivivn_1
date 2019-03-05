@@ -23,7 +23,17 @@ def TextCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxl
 
     concat = Concatenate(axis = 1)(conv_ops)
     concat = Dropout(0.5)(concat)
-    flat = Flatten()(concat)
+
+    conv_2 = Conv1D(128, 5, activation = 'relu')(concat)
+    conv_2 = MaxPool1D(5)(conv_2)
+    conv_2 = Dropout(0.5)(conv_2)
+
+    conv_3 = Conv1D(128, 5, activation = 'relu')(conv_2)
+    conv_3 = MaxPool1D(5)(conv_3)
+    conv_3 = Dropout(0.5)(conv_3)
+
+
+    flat = Flatten()(conv_3)
 
     op = Dense(64, activation = "relu")(flat)
     op = Dropout(0.5)(op)
