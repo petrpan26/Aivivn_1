@@ -4,6 +4,7 @@ from scripts.constant import DEFAULT_MAX_FEATURES
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from scripts.rnn import RNNKeras, RNNKerasCPU, LSTMKeras, SARNNKerasCPU, SARNNKeras
+from scripts.cnn import TextCNN
 import argparse
 import os
 import numpy as np
@@ -95,7 +96,8 @@ model_dict = {
     'RNNKerasCPU': RNNKerasCPU,
     'LSTMKeras': LSTMKeras,
     'SARNNKerasCPU': SARNNKerasCPU,
-    'SARNNKeras': SARNNKeras
+    'SARNNKeras': SARNNKeras,
+    'TextCNN': TextCNN
 }
 
 if __name__ == '__main__':

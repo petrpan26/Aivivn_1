@@ -6,7 +6,6 @@ from keras.layers import \
     Lambda, Concatenate
 from .util import f1
 from keras_self_attention import SeqSelfAttention, SeqWeightedAttention
-import keras.backend as K
 
 
 def RNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100):
@@ -26,9 +25,6 @@ def RNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, max
     op = Dropout(0.5)(op)
     op = Dense(1, activation = "sigmoid")(op)
 
-    # x = Dense(50, activation = "relu")(x)
-    # x = Dropout(0.1)(x)
-    # x = Dense(1, activation = "sigmoid")(x)
     model = Model(inputs = inp, outputs = op)
     model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
     return model
@@ -56,7 +52,6 @@ def LSTMKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, ma
     x = Bidirectional(CuDNNLSTM(50, return_sequences = True))(x)
     x = Dropout(0.1)(x)
     x = GlobalMaxPool1D()(x)
-    x = Dropout(0.1)(x)
     x = Dense(50, activation = "relu")(x)
     x = Dropout(0.1)(x)
     x = Dense(1, activation = "sigmoid")(x)
