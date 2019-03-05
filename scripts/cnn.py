@@ -2,10 +2,9 @@ from keras.models import Model
 from keras.layers import \
     Dense, Embedding, Input, \
     Conv1D, MaxPool1D, \
-    Dropout, \
-    Lambda, Concatenate, Flatten
+    Dropout, BatchNormalization, \
+    Concatenate, Flatten
 from .util import f1
-from keras_self_attention import SeqSelfAttention, SeqWeightedAttention
 
 
 
@@ -22,21 +21,26 @@ def TextCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxl
         conv_ops.append(pool)
 
     concat = Concatenate(axis = 1)(conv_ops)
-    concat = Dropout(0.1)(concat)
+    # concat = Dropout(0.1)(concat)
+    concat = BatchNormalization()(concat)
+
 
     conv_2 = Conv1D(128, 5, activation = 'relu')(concat)
     conv_2 = MaxPool1D(5)(conv_2)
-    conv_2 = Dropout(0.1)(conv_2)
+    conv_2 = BatchNormalization()(conv_2)
+    # conv_2 = Dropout(0.1)(conv_2)
 
     conv_3 = Conv1D(128, 5, activation = 'relu')(conv_2)
     conv_3 = MaxPool1D(5)(conv_3)
-    conv_3 = Dropout(0.1)(conv_3)
+    conv_3 = BatchNormalization()(conv_3)
+    # conv_3 = Dropout(0.1)(conv_3)
 
 
     flat = Flatten()(conv_3)
 
     op = Dense(64, activation = "relu")(flat)
-    op = Dropout(0.5)(op)
+    # op = Dropout(0.5)(op)
+    op = BatchNormalization()(op)
     op = Dense(1, activation = "sigmoid")(op)
 
     model = Model(inputs = inp, outputs = op)
