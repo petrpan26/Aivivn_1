@@ -10,7 +10,7 @@ from keras_self_attention import SeqSelfAttention, SeqWeightedAttention
 
 
 # Based on https://richliao.github.io/supervised/classification/2016/11/26/textclassifier-convolutional/
-# https://www.cs.cmu.edu/~diyiy/docs/naacl16.pdf
+# https://www.aclweb.org/anthology/D14-1181
 def TextCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, filter_sizes = {2, 3, 4}):
     inp = Input(shape = (maxlen, ))
     x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix])(inp)
@@ -22,15 +22,15 @@ def TextCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxl
         conv_ops.append(pool)
 
     concat = Concatenate(axis = 1)(conv_ops)
-    concat = Dropout(0.5)(concat)
+    concat = Dropout(0.1)(concat)
 
     conv_2 = Conv1D(128, 5, activation = 'relu')(concat)
     conv_2 = MaxPool1D(5)(conv_2)
-    conv_2 = Dropout(0.5)(conv_2)
+    conv_2 = Dropout(0.1)(conv_2)
 
     conv_3 = Conv1D(128, 5, activation = 'relu')(conv_2)
     conv_3 = MaxPool1D(5)(conv_3)
-    conv_3 = Dropout(0.5)(conv_3)
+    conv_3 = Dropout(0.1)(conv_3)
 
 
     flat = Flatten()(conv_3)
