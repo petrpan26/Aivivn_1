@@ -88,7 +88,7 @@ def make_embedding(texts, embedding_path, max_features):
     word_index = {word.lower() for sentence in texts for word in sentence}
     nb_words = min(max_features, len(word_index))
     embedding_matrix = np.zeros((nb_words + 1, embed_size))
-    i = 0
+    i = 1
     word_map = defaultdict(lambda: nb_words)
     for word in word_index:
         if i >= max_features:
@@ -159,3 +159,84 @@ def predictions_to_submission(test_data, predictor):
     submission = test_data[['id']]
     submission['label'] = test_data['text'].progress_apply(predictor)
     return submission
+
+
+# HELPERS FOR HIERARCHICAL MODEL:
+def sent_tokenize(texts):
+    nlp = Vietnamese()
+    nlp.add_pipe(nlp.create_pipe('sentencizer'))
+    docs = []
+    for text in texts:
+        text_tokenized = []
+        for sentence in nlp(text.lower()[1:-1]).sents:
+            sent_tokens = np.array([postprocess_token(token.text) for token in sentence])
+            text_tokenized.append(sent_tokens)
+        docs.append(text_tokenized)
+
+    return np.array(docs)
+
+
+def sent_embedding(tokenized_texts, embedding_path, max_features):
+    embedding_path = abspath(embedding_path)
+
+    def get_coefs(word, *arr):
+        return word, np.asarray(arr, dtype='float32')
+
+    if embedding_path.endswith('.vec'):
+        embedding_index = dict(get_coefs(*o.strip().split(" "))
+                               for o in open(embedding_path))
+        mean_embedding = np.mean(np.array(list(embedding_index.values())))
+    elif embedding_path.endswith('bin'):
+        embedding_index = KeyedVectors.load_word2vec_format(
+            embedding_path, binary=True)
+        mean_embedding = np.mean(embedding_index.vectors, axis=0)
+    embed_size = mean_embedding.shape[0]
+    word_index = {word.lower() for text in tokenized_texts for sentence in text for word in sentence}
+    nb_words = min(max_features, len(word_index))
+    embedding_matrix = np.zeros((nb_words + 1, embed_size))
+
+    i = 1
+    word_map = defaultdict(lambda: nb_words)
+    for word in word_index:
+        if i >= max_features:
+            continue
+        if word in embedding_index:
+            embedding_matrix[i] = embedding_index[word]
+        else:
+            embedding_matrix[i] = mean_embedding
+        word_map[word] = i
+        i += 1
+    embedding_matrix[-1] = mean_embedding
+    return embed_size, word_map, embedding_matrix
+
+def text_sents_to_sequences(texts, word_map, max_nb_sent, max_sent_len):
+    ret = []
+    for i in range(len(texts)):
+        text_vecs = []
+        for j in range(len(texts[i])):
+            if (j < max_nb_sent):
+                sent_vecs = []
+                for k in range(len(texts[i][j])):
+                    if (k < max_sent_len):
+                        sent_vecs.append(word_map[texts[i][j][k]])
+                if (len(sent_vecs) < max_sent_len):
+                    sent_vecs = np.pad(
+                        sent_vecs,
+                        (0, max(0, max_sent_len - len(sent_vecs))),
+                        'constant',
+                        constant_values=0
+                    )
+                text_vecs.append(sent_vecs)
+
+
+        if (len(text_vecs) < max_nb_sent):
+            text_vecs = np.pad(
+                text_vecs,
+                ((0, max_nb_sent - len(text_vecs)), (0, 0)),
+                'constant',
+                constant_values=0
+            )
+
+        ret.append(text_vecs)
+
+    return np.array(ret)
