@@ -99,7 +99,7 @@ def SARNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, m
     return model
 
 
-def HRNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40):
+def HRNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40):
     sent_inp = Input(shape = (max_sent_len, ))
     embed = Embedding(
         input_dim = max_features,
@@ -118,3 +118,21 @@ def HRNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_
     model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
     return model
 
+def HRNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40):
+    sent_inp = Input(shape = (max_sent_len, ))
+    embed = Embedding(
+        input_dim = max_features,
+        output_dim = embed_size,
+        weights = [embeddingMatrix],
+        trainable = True
+    )(sent_inp)
+    word_lstm = Bidirectional(CuDNNLSTM(128))(embed)
+    sent_encoder = Model(sent_inp, word_lstm)
+
+    doc_input = Input(shape = (max_nb_sent, max_sent_len))
+    doc_encoder = TimeDistributed(sent_encoder)(doc_input)
+    sent_lstm = Bidirectional(CuDNNLSTM(128))(doc_encoder)
+    preds = Dense(1, activation = "sigmoid")(sent_lstm)
+    model = Model(inputs = doc_input, outputs = preds)
+    model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
+    return model
