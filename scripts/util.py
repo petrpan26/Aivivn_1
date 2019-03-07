@@ -168,9 +168,12 @@ def sent_tokenize(texts):
     docs = []
     for text in texts:
         text_tokenized = []
-        for sentence in nlp(text.lower()[1:-1]).sents:
-            sent_tokens = np.array([postprocess_token(token.text) for token in sentence])
-            text_tokenized.append(sent_tokens)
+        if (len(text) > 3):
+            for sentence in nlp(text.lower()[1:-1]).sents:
+                sent_tokens = np.array([postprocess_token(token.text) for token in sentence])
+                text_tokenized.append(sent_tokens)
+        else:
+            text_tokenized.append([])
         docs.append(text_tokenized)
 
     return np.array(docs)
