@@ -2,7 +2,7 @@ from scripts.util import read_file, sent_tokenize, sent_embedding, text_sents_to
 from scripts.constant import DEFAULT_MAX_FEATURES
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from scripts.rnn import HRNN, HRNNCPU
+from scripts.rnn import HRNN, HRNNCPU, OriginalHARNN, OriginalHARNNCPU
 import argparse
 import os
 import numpy as np
@@ -93,6 +93,8 @@ def train_model(model, embedding_path, max_features, should_mix):
 model_dict = {
     'HRNN': HRNN,
     'HRNNCPU': HRNNCPU,
+    'OriginalHARNN': OriginalHARNN,
+    'OriginalHARNNCPU':OriginalHARNNCPU
 }
 
 if __name__ == '__main__':

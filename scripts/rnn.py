@@ -3,7 +3,7 @@ from keras.layers import \
     Dense, Embedding, Input, \
     CuDNNGRU, GRU, LSTM, Bidirectional, CuDNNLSTM, \
     GlobalMaxPool1D, GlobalAveragePooling1D, Dropout, \
-    Lambda, Concatenate, TimeDistributed
+    Lambda, Concatenate, TimeDistributed, Layer
 from .util import f1
 from keras_self_attention import SeqSelfAttention, SeqWeightedAttention
 
@@ -136,3 +136,88 @@ def HRNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_
     model = Model(inputs = doc_input, outputs = preds)
     model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
     return model
+
+
+def OriginalHARNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40):
+    sent_inp = Input(shape = (max_sent_len, ))
+    embed = Embedding(
+        input_dim = max_features,
+        output_dim = embed_size,
+        weights = [embeddingMatrix],
+        trainable = True
+    )(sent_inp)
+    word_lstm = Bidirectional(LSTM(128, dropout = 0.5, recurrent_dropout = 0.5, return_sequences = True))(embed)
+    word_att = AttLayer(context_size = 256)(word_lstm)
+    sent_encoder = Model(sent_inp, word_att)
+
+    doc_input = Input(shape = (max_nb_sent, max_sent_len))
+    doc_encoder = TimeDistributed(sent_encoder)(doc_input)
+    sent_lstm = Bidirectional(LSTM(128, dropout = 0.5, recurrent_dropout = 0.5, return_sequences = True))(doc_encoder)
+    sent_att = AttLayer(context_size = 256)(sent_lstm)
+    preds = Dense(1, activation = "sigmoid")(sent_att)
+    model = Model(inputs = doc_input, outputs = preds)
+    model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
+    return model
+
+def OriginalHARNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40):
+    sent_inp = Input(shape = (max_sent_len, ))
+    embed = Embedding(
+        input_dim = max_features,
+        output_dim = embed_size,
+        weights = [embeddingMatrix],
+        trainable = True
+    )(sent_inp)
+    word_lstm = Bidirectional(CuDNNLSTM(128, return_sequences = True))(embed)
+    word_att = AttLayer(context_size = 256)(word_lstm)
+    sent_encoder = Model(sent_inp, word_att)
+
+    doc_input = Input(shape = (max_nb_sent, max_sent_len))
+    doc_encoder = TimeDistributed(sent_encoder)(doc_input)
+    sent_lstm = Bidirectional(CuDNNLSTM(128, return_sequences = True))(doc_encoder)
+    sent_att = AttLayer(context_size = 256)(sent_lstm)
+    preds = Dense(1, activation = "sigmoid")(sent_att)
+    model = Model(inputs = doc_input, outputs = preds)
+    model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
+    return model
+
+
+class AttLayer(Layer):
+    def __init__(self, context_size):
+        self._context_size = context_size
+        # self._linear = Dense(context_size, activation = "tanh")
+        super(AttLayer, self).__init__()
+        return
+
+    def build(self, input_shape):
+        self._W = self.add_weight(
+            name = "W",
+            shape = (input_shape[-1], self._context_size),
+            initializer="he_normal",
+            trainable=True
+        )
+        self._b = self.add_weight(
+            name = "W",
+            shape = (1, self._context_size),
+            initializer="constant",
+            trainable=True
+        )
+        self._context = self.add_weight(
+            name = "context",
+            shape = (self._context_size, 1),
+            initializer = "he_normal",
+            trainable = True
+        )
+        super(AttLayer, self).build(input_shape)
+
+    def call(self, input):
+        # input: (N, T, M)
+        rep = K.tanh(K.dot(input, self._W) + self._b) # (N, T, C)
+        score = K.squeeze(K.dot(rep, self._context), axis = -1) # (N, T)
+        weight = softmax(score, axis = -1) # (N, T)
+        op = K.batch_dot(input, weight, axes = (1, 1))
+
+        return op
+
+    def compute_output_shape(self, input_shape):
+        return (input_shape[0], input_shape[-1])
+
