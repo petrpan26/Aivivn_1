@@ -72,8 +72,9 @@ def train_model(model, embedding_path, max_features, should_mix):
 
     model.load_weights('{}/models.hdf5'.format(model_path))
     prediction_prob = model.predict(texts_id_val)
-    OPTIMAL_THRESHOLD = find_threshold(prediction_prob, labels_val)
-    print('OPTIMAL_THRESHOLD: {}'.format(OPTIMAL_THRESHOLD))
+    # OPTIMAL_THRESHOLD = find_threshold(prediction_prob, labels_val)
+    # print('OPTIMAL_THRESHOLD: {}'.format(OPTIMAL_THRESHOLD))
+    OPTIMAL_THRESHOLD = 0.5
     prediction = (prediction_prob > OPTIMAL_THRESHOLD).astype(np.int8)
     print('F1 validation score: {}'.format(f1_score(prediction, labels_val)))
     with open('{}/f1'.format(model_path), 'w') as fp:
