@@ -232,7 +232,7 @@ class AttLayer(Layer):
 
 
     def compute_mask(self, input, input_mask=None):
-        return None
+        return input_mask
 
 
     def call(self, input, mask = None):
