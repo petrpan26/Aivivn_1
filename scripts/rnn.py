@@ -205,9 +205,9 @@ def OriginalHARNN(embeddingMatrix = None, embed_size = 400, max_features = 20000
 class AttLayer(Layer):
     def __init__(self, context_size):
         self._context_size = context_size
+        self.supports_masking = True
         # self._linear = Dense(context_size, activation = "tanh")
         super(AttLayer, self).__init__()
-        return
 
     def build(self, input_shape):
         self._W = self.add_weight(
@@ -230,11 +230,24 @@ class AttLayer(Layer):
         )
         super(AttLayer, self).build(input_shape)
 
-    def call(self, input):
+
+    def compute_mask(self, input, input_mask=None):
+        return None
+
+
+    def call(self, input, mask = None):
         # input: (N, T, M)
         rep = K.tanh(K.dot(input, self._W) + self._b) # (N, T, C)
         score = K.squeeze(K.dot(rep, self._context), axis = -1) # (N, T)
-        weight = softmax(score, axis = -1) # (N, T)
+
+        weight = K.exp(score)
+        if mask is not None:
+            weight *= K.cast(mask, K.floatx())
+
+        weight /= K.cast(K.sum(weight, axis = 1) + K.epsilon(), K.floatx())
+
+
+        # weight = softmax(score, axis = -1) # (N, T)
         op = K.batch_dot(input, weight, axes = (1, 1))
 
         return op
