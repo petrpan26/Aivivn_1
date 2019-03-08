@@ -9,8 +9,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from os.path import abspath
 from spacy.lang.vi import Vietnamese
-from spacy.attrs import ORTH
-from .constant import EMOTICONS, DEFAULT_MAX_FEATURES, DEFAULT_MAX_LENGTH
+from .constant import DEFAULT_MAX_LENGTH
 from gensim.models.keyedvectors import KeyedVectors
 from sklearn.metrics import f1_score
 import string
@@ -47,10 +46,6 @@ def read_file(file_path, is_train=True):
 
 
 def tokenize(texts):
-    ExceptionsSet = {}
-    for orth in EMOTICONS:
-        ExceptionsSet[orth] = [{ORTH: orth}]
-
     nlp = Vietnamese()
     docs = []
     for text in texts:
