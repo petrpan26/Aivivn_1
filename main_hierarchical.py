@@ -57,7 +57,7 @@ def train_model(model, embedding_path, max_features, max_nb_sent, max_sent_len, 
         mode='max',
         save_best_only=True
     )
-    early = EarlyStopping(monitor='val_f1', mode='max', patience=3)
+    early = EarlyStopping(monitor='val_f1', mode='max', patience=5)
     callbacks_list = [checkpoint, early]
     batch_size = 16
     epochs = 100
