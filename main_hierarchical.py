@@ -29,7 +29,7 @@ def train_model(model, embedding_path, max_features, should_mix):
         max_features
     )
 
-    texts_id = text_sents_to_sequences(train_tokenized_texts, word_map, max_nb_sent = 3, max_sent_len = 40)
+    texts_id = text_sents_to_sequences(train_tokenized_texts, word_map, max_nb_sent = 3, max_sent_len = 50)
     print('Number of train data: {}'.format(labels.shape))
 
     texts_id_train, texts_id_val, labels_train, labels_val = train_test_split(
