@@ -6,3 +6,4 @@ scikit-learn>=0.20.2
 keras
 tensorflow
 keras-self-attention==0.34.0
+keras-layer-normalization==0.10.0
