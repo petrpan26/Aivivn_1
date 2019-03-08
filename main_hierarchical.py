@@ -156,4 +156,4 @@ if __name__ == '__main__':
     if not args.model in model_dict:
         raise RuntimeError('Model not found')
     train_model(model_dict[args.model], args.embedding,
-                int(args.max), args.mix)
+                int(args.max), args.nb_sent, args.sent_len, args.find_threshold, args.mix)
