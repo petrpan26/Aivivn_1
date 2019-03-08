@@ -80,12 +80,12 @@ def SARNNKerasCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000
         attention_regularizer_weight=1e-4,
     )(x)
     # x = LayerNormalization()(x)
-    # x = Dropout(0.5)(x)
+    x = Dropout(0.5)(x)
 
     x = Bidirectional(LSTM(128, return_sequences = True))(x)
     x = SeqWeightedAttention()(x)
     # x = LayerNormalization()(x)
-    # x = Dropout(0.5)(x)
+    x = Dropout(0.5)(x)
 
     x = Dense(64, activation = "relu")(x)
     x = Dropout(0.5)(x)
@@ -103,12 +103,12 @@ def SARNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, m
         attention_regularizer_weight=1e-4,
     )(x)
     # x = LayerNormalization()(x)
-    # x = Dropout(0.5)(x)
+    x = Dropout(0.5)(x)
 
     x = Bidirectional(rnn_type(128, return_sequences = True))(x)
     x = SeqWeightedAttention()(x)
     # x = LayerNormalization()(x)
-    # x = Dropout(0.5)(x)
+    x = Dropout(0.5)(x)
 
     x = Dense(64, activation = "relu")(x)
     x = Dropout(0.5)(x)
@@ -274,12 +274,14 @@ def HARNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb
     )(sent_inp)
     word_lstm = Bidirectional(CuDNNLSTM(128, return_sequences = True))(embed)
     word_att = SeqWeightedAttention()(word_lstm)
+    word_att = Dropout(0.5)(word_att)
     sent_encoder = Model(sent_inp, word_att)
 
     doc_input = Input(shape = (max_nb_sent, max_sent_len))
     doc_encoder = TimeDistributed(sent_encoder)(doc_input)
     sent_lstm = Bidirectional(CuDNNLSTM(128, return_sequences = True))(doc_encoder)
     sent_att = SeqWeightedAttention()(sent_lstm)
+    sent_att = Dropout(0.5)(sent_att)
     preds = Dense(1, activation = "sigmoid")(sent_att)
     model = Model(inputs = doc_input, outputs = preds)
     model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
