@@ -60,7 +60,9 @@ def train_model(model, embedding_path, max_features, should_mix):
     model = model(
         embeddingMatrix=embedding_mat,
         embed_size=embed_size,
-        max_features=embedding_mat.shape[0]
+        max_features=embedding_mat.shape[0],
+        max_nb_sent = 3,
+        max_sent_len = 50
     )
     model.fit(
         texts_id_train, labels_train,
