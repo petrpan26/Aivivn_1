@@ -241,10 +241,10 @@ class AttLayer(Layer):
         score = K.squeeze(K.dot(rep, self._context), axis = -1) # (N, T)
 
         weight = K.exp(score)
-        # if mask is not None:
-        #     weight *= K.cast(mask, K.floatx())
+        if mask is not None:
+            weight *= K.cast(mask, K.floatx())
 
-        weight /= K.cast(K.sum(weight, axis = 1) + K.epsilon(), K.floatx())
+        weight /= K.cast(K.sum(weight, axis = 1, keepdims = True) + K.epsilon(), K.floatx())
 
 
         # weight = softmax(score, axis = -1) # (N, T)
