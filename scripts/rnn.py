@@ -36,15 +36,21 @@ def RNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, max
 def RNNKerasCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100):
     inp = Input(shape = (maxlen, ))
     x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix])(inp)
-    x = Bidirectional(GRU(128, return_sequences = True))(x)
-    x = Dropout(0.5)(x)
-    x = Bidirectional(GRU(128, return_sequences = True))(x)
-    x = Dropout(0.5)(x)
-    x = GlobalMaxPool1D()(x)
-    x = Dense(64, activation = "relu")(x)
-    x = Dropout(0.5)(x)
-    x = Dense(1, activation = "sigmoid")(x)
-    model = Model(inputs = inp, outputs = x)
+    x = Bidirectional(GRU(128, return_sequences = True, recurrent_dropout = 0.5, dropout = 0.5))(x)
+    # x = Dropout(0.5)(x)
+    x = Bidirectional(GRU(128, return_sequences = True, recurrent_dropout = 0.5, dropout = 0.5))(x)
+    # x = Dropout(0.5)(x)
+
+    max_pool = GlobalMaxPool1D()(x)
+    avg_pool = GlobalAveragePooling1D()(x)
+    last = Lambda(lambda x: x[:, 0, :])(x)
+    concat_pool = Concatenate(axis = -1)([last, max_pool, avg_pool])
+
+    op = Dense(64, activation = "relu")(concat_pool)
+    op = Dropout(0.5)(op)
+    op = Dense(1, activation = "sigmoid")(op)
+
+    model = Model(inputs = inp, outputs = op)
     model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
     return model
 
@@ -224,4 +230,51 @@ class AttLayer(Layer):
 
     def compute_output_shape(self, input_shape):
         return (input_shape[0], input_shape[-1])
+
+
+def HARNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40):
+    sent_inp = Input(shape = (max_sent_len, ))
+    embed = Embedding(
+        input_dim = max_features,
+        output_dim = embed_size,
+        weights = [embeddingMatrix],
+        trainable = True
+    )(sent_inp)
+    word_lstm = Bidirectional(LSTM(128, dropout = 0.5, recurrent_dropout = 0.5, return_sequences = True))(embed)
+    word_att = SeqWeightedAttention()(word_lstm)
+    sent_encoder = Model(sent_inp, word_att)
+
+    doc_input = Input(shape = (max_nb_sent, max_sent_len))
+    doc_encoder = TimeDistributed(sent_encoder)(doc_input)
+    sent_lstm = Bidirectional(LSTM(128, dropout = 0.5, recurrent_dropout = 0.5, return_sequences = True))(doc_encoder)
+    sent_att = SeqWeightedAttention()(sent_lstm)
+    preds = Dense(1, activation = "sigmoid")(sent_att)
+    model = Model(inputs = doc_input, outputs = preds)
+    model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
+    return model
+
+
+
+def HARNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40):
+    sent_inp = Input(shape = (max_sent_len, ))
+    embed = Embedding(
+        input_dim = max_features,
+        output_dim = embed_size,
+        weights = [embeddingMatrix],
+        trainable = True
+    )(sent_inp)
+    word_lstm = Bidirectional(CuDNNLSTM(128, return_sequences = True))(embed)
+    word_att = SeqWeightedAttention()(word_lstm)
+    sent_encoder = Model(sent_inp, word_att)
+
+    doc_input = Input(shape = (max_nb_sent, max_sent_len))
+    doc_encoder = TimeDistributed(sent_encoder)(doc_input)
+    sent_lstm = Bidirectional(CuDNNLSTM(128, return_sequences = True))(doc_encoder)
+    sent_att = SeqWeightedAttention()(sent_lstm)
+    preds = Dense(1, activation = "sigmoid")(sent_att)
+    model = Model(inputs = doc_input, outputs = preds)
+    model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
+    return model
+
+
 

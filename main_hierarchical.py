@@ -2,7 +2,7 @@ from scripts.util import read_file, sent_tokenize, sent_embedding, text_sents_to
 from scripts.constant import DEFAULT_MAX_FEATURES
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from scripts.rnn import HRNN, HRNNCPU, OriginalHARNN, OriginalHARNNCPU
+from scripts.rnn import HRNN, HRNNCPU, OriginalHARNN, OriginalHARNNCPU, HARNN, HARNNCPU
 import argparse
 import os
 import numpy as np
@@ -80,7 +80,7 @@ def train_model(model, embedding_path, max_features, should_mix):
     with open('{}/f1'.format(model_path), 'w') as fp:
         fp.write(str(f1_score(prediction, labels_val)))
 
-    test_id_texts = text_sents_to_sequences(test_tokenizes_texts, word_map, max_nb_sent = 3, max_sent_len = 40)
+    test_id_texts = text_sents_to_sequences(test_tokenizes_texts, word_map, max_nb_sent = 3, max_sent_len = 50)
     test_prediction = model.predict(test_id_texts)
 
     df_predicton = pd.read_csv("./data/sample_submission.csv")
@@ -93,6 +93,8 @@ def train_model(model, embedding_path, max_features, should_mix):
 model_dict = {
     'HRNN': HRNN,
     'HRNNCPU': HRNNCPU,
+    'HARNN': HARNN,
+    'HARNNCPU': HARNNCPU,
     'OriginalHARNN': OriginalHARNN,
     'OriginalHARNNCPU':OriginalHARNNCPU
 }
