@@ -12,7 +12,7 @@ from scripts.util import find_threshold
 from sklearn.metrics import f1_score
 
 
-def train_model(model, embedding_path, max_features, should_mix):
+def train_model(model, embedding_path, max_features, max_nb_sent, max_sent_len, should_find_threshold, should_mix):
     model_name = '-'.join(
         '.'.join(str(datetime.datetime.now()).split('.')[:-1]).split(' '))
 
@@ -29,7 +29,12 @@ def train_model(model, embedding_path, max_features, should_mix):
         max_features
     )
 
-    texts_id = text_sents_to_sequences(train_tokenized_texts, word_map, max_nb_sent = 3, max_sent_len = 50)
+    texts_id = text_sents_to_sequences(
+        train_tokenized_texts,
+        word_map,
+        max_nb_sent = max_nb_sent,
+        max_sent_len = max_sent_len
+    )
     print('Number of train data: {}'.format(labels.shape))
 
     texts_id_train, texts_id_val, labels_train, labels_val = train_test_split(
@@ -61,8 +66,8 @@ def train_model(model, embedding_path, max_features, should_mix):
         embeddingMatrix=embedding_mat,
         embed_size=embed_size,
         max_features=embedding_mat.shape[0],
-        max_nb_sent = 3,
-        max_sent_len = 50
+        max_nb_sent = max_nb_sent,
+        max_sent_len = max_sent_len
     )
     model.fit(
         texts_id_train, labels_train,
@@ -74,15 +79,22 @@ def train_model(model, embedding_path, max_features, should_mix):
 
     model.load_weights('{}/models.hdf5'.format(model_path))
     prediction_prob = model.predict(texts_id_val)
-    # OPTIMAL_THRESHOLD = find_threshold(prediction_prob, labels_val)
-    # print('OPTIMAL_THRESHOLD: {}'.format(OPTIMAL_THRESHOLD))
-    OPTIMAL_THRESHOLD = 0.5
+    if should_find_threshold:
+        OPTIMAL_THRESHOLD = find_threshold(prediction_prob, labels_val)
+    else:
+        OPTIMAL_THRESHOLD = 0.5
+    print('OPTIMAL_THRESHOLD: {}'.format(OPTIMAL_THRESHOLD))
     prediction = (prediction_prob > OPTIMAL_THRESHOLD).astype(np.int8)
     print('F1 validation score: {}'.format(f1_score(prediction, labels_val)))
     with open('{}/f1'.format(model_path), 'w') as fp:
         fp.write(str(f1_score(prediction, labels_val)))
 
-    test_id_texts = text_sents_to_sequences(test_tokenizes_texts, word_map, max_nb_sent = 3, max_sent_len = 50)
+    test_id_texts = text_sents_to_sequences(
+        test_tokenizes_texts,
+        word_map,
+        max_nb_sent = max_nb_sent,
+        max_sent_len = max_sent_len
+    )
     test_prediction = model.predict(test_id_texts)
 
     df_predicton = pd.read_csv("./data/sample_submission.csv")
@@ -119,6 +131,22 @@ if __name__ == '__main__':
         '--max',
         help='Model use',
         default=DEFAULT_MAX_FEATURES
+    )
+    parser.add_argument(
+        '--nb_sent',
+        help='Model use',
+        default=3
+    )
+    parser.add_argument(
+        '--sent_len',
+        help='Model use',
+        default=50
+    )
+    parser.add_argument(
+        '--find_threshold',
+        action='store_true',
+        help='Model use',
+        default = True
     )
     parser.add_argument(
         '--mix',

@@ -14,7 +14,7 @@ from scripts.util import find_threshold
 from sklearn.metrics import f1_score
 
 
-def train_model(model, embedding_path, max_features, should_mix):
+def train_model(model, embedding_path, max_features, should_find_threshold, should_mix):
     model_name = '-'.join(
         '.'.join(str(datetime.datetime.now()).split('.')[:-1]).split(' '))
 
@@ -74,8 +74,10 @@ def train_model(model, embedding_path, max_features, should_mix):
 
     model.load_weights('{}/models.hdf5'.format(model_path))
     prediction_prob = model.predict(texts_id_val)
-    # OPTIMAL_THRESHOLD = find_threshold(prediction_prob, labels_val)
-    OPTIMAL_THRESHOLD = 0.5
+    if should_find_threshold:
+        OPTIMAL_THRESHOLD = find_threshold(prediction_prob, labels_val)
+    else:
+        OPTIMAL_THRESHOLD = 0.5
     print('OPTIMAL_THRESHOLD: {}'.format(OPTIMAL_THRESHOLD))
     prediction = (prediction_prob > OPTIMAL_THRESHOLD).astype(np.int8)
     print('F1 validation score: {}'.format(f1_score(prediction, labels_val)))
@@ -119,6 +121,12 @@ if __name__ == '__main__':
         '--max',
         help='Model use',
         default=DEFAULT_MAX_FEATURES
+    )
+    parser.add_argument(
+        '--find_threshold',
+        action='store_true',
+        help='Model use',
+        default = True
     )
     parser.add_argument(
         '--mix',
