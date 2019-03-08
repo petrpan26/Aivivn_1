@@ -6,6 +6,10 @@ from keras.layers import \
     Lambda, Concatenate, TimeDistributed, Layer
 from .util import f1
 from keras_self_attention import SeqSelfAttention, SeqWeightedAttention
+import keras.backend as K
+from keras.activations import softmax
+
+
 
 
 def RNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100):
