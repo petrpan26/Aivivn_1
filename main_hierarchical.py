@@ -145,8 +145,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--find_threshold',
         action='store_true',
-        help='Model use',
-        default = True
+        help='Model use'
     )
     parser.add_argument(
         '--mix',
