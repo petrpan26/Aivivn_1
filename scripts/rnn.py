@@ -102,10 +102,14 @@ def SARNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, m
         # attention_type = SeqSelfAttention.ATTENTION_TYPE_MUL,
         attention_regularizer_weight=1e-4,
     )(x)
-    x = Dropout(0.5)(x)
+    x = LayerNormalization()(x)
+
+    # x = Dropout(0.5)(x)
     x = Bidirectional(rnn_type(128, return_sequences = True))(x)
     x = SeqWeightedAttention()(x)
-    x = Dropout(0.5)(x)
+    x = LayerNormalization()(x)
+
+    # x = Dropout(0.5)(x)
     x = Dense(64, activation = "relu")(x)
     x = Dropout(0.5)(x)
     x = Dense(1, activation = "sigmoid")(x)
