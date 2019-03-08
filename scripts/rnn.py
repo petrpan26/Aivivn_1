@@ -75,7 +75,7 @@ def SARNNKerasCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000
     x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix])(inp)
     x = Bidirectional(LSTM(128, return_sequences = True))(x)
     x = SeqSelfAttention(
-        attention_type = SeqSelfAttention.ATTENTION_TYPE_MUL,
+        # attention_type = SeqSelfAttention.ATTENTION_TYPE_MUL,
         attention_regularizer_weight=1e-4,
     )(x)
     x = Dropout(0.5)(x)
@@ -94,7 +94,7 @@ def SARNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, m
     x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix])(inp)
     x = Bidirectional(rnn_type(128, return_sequences = True))(x)
     x = SeqSelfAttention(
-        attention_type = SeqSelfAttention.ATTENTION_TYPE_MUL,
+        # attention_type = SeqSelfAttention.ATTENTION_TYPE_MUL,
         attention_regularizer_weight=1e-4,
     )(x)
     x = Dropout(0.5)(x)
