@@ -69,7 +69,7 @@ def VDCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen
     conv_2_main = Conv1D(128, 5, activation = 'relu', padding='same')(conv_2_main)
     conv_2_main = BatchNormalization()(conv_2_main)
     conv_2 = Add()([concat, conv_2_main])
-    conv_2 = MaxPool1D(5)(conv_2)
+    conv_2 = MaxPool1D(pool_size = 2, strides = 2)(conv_2)
     # conv_2 = BatchNormalization()(conv_2)
     # conv_2 = Dropout(0.1)(conv_2)
 
@@ -78,7 +78,7 @@ def VDCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen
     conv_3_main = Conv1D(128, 5, activation = 'relu', padding='same')(conv_3_main)
     conv_3_main = BatchNormalization()(conv_3_main)
     conv_3 = Add()([conv_2, conv_3_main])
-    conv_3 = MaxPool1D(5)(conv_3)
+    conv_3 = MaxPool1D(pool_size = 2, strides = 2)(conv_3)
     # conv_3 = BatchNormalization()(conv_3)
     # conv_3 = Dropout(0.1)(conv_3)
 
