@@ -12,7 +12,7 @@ from scripts.util import find_threshold
 from sklearn.metrics import f1_score
 
 
-def train_model(model, embedding_path, max_features, max_nb_sent, max_sent_len, should_find_threshold, should_mix):
+def train_model(model, embedding_path, max_features, max_nb_sent, max_sent_len, should_find_threshold, should_mix, return_prob):
     model_name = '-'.join(
         '.'.join(str(datetime.datetime.now()).split('.')[:-1]).split(' '))
 
@@ -79,6 +79,7 @@ def train_model(model, embedding_path, max_features, max_nb_sent, max_sent_len, 
 
     model.load_weights('{}/models.hdf5'.format(model_path))
     prediction_prob = model.predict(texts_id_val)
+
     if should_find_threshold:
         OPTIMAL_THRESHOLD = find_threshold(prediction_prob, labels_val)
     else:
@@ -98,8 +99,12 @@ def train_model(model, embedding_path, max_features, max_nb_sent, max_sent_len, 
     test_prediction = model.predict(test_id_texts)
 
     df_predicton = pd.read_csv("./data/sample_submission.csv")
-    df_predicton["label"] = (
-        test_prediction > OPTIMAL_THRESHOLD).astype(np.int8)
+
+    if return_prob:
+        df_predicton["label"] = test_prediction
+    else:
+        df_predicton["label"] = (
+            test_prediction > OPTIMAL_THRESHOLD).astype(np.int8)
     print('Number of test data: {}'.format(df_predicton.shape[0]))
     df_predicton.to_csv('{}/prediction.csv'.format(model_path), index=False)
 
@@ -152,8 +157,13 @@ if __name__ == '__main__':
         action='store_true',
         help='Model use'
     )
+    parser.add_argument(
+        '--prob',
+        action='store_true',
+        help='Model use'
+    )
     args = parser.parse_args()
     if not args.model in model_dict:
         raise RuntimeError('Model not found')
     train_model(model_dict[args.model], args.embedding,
-                int(args.max), args.nb_sent, args.sent_len, args.find_threshold, args.mix)
+                int(args.max), args.nb_sent, args.sent_len, args.find_threshold, args.mix, args.prob)
