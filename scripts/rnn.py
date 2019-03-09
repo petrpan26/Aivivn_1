@@ -248,7 +248,7 @@ class AttLayer(Layer):
 
 
         # weight = softmax(score, axis = -1) # (N, T)
-        op = K.batch_dot(input, weight, axes = (1, 1))
+        op = K.batch_dot(input, weight, axes = (1, 1)) # (N, M)
 
         return op
 

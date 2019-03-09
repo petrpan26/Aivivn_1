@@ -82,7 +82,7 @@ def LSTMCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxl
 
     op = Dense(64, activation = "relu")(flat)
     op = Dropout(0.5)(op)
-    op = BatchNormalization()(op)
+    # op = BatchNormalization()(op)
     op = Dense(1, activation = "sigmoid")(op)
 
     model = Model(inputs = inp, outputs = op)
