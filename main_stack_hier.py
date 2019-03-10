@@ -90,7 +90,7 @@ def stack(models_list, hier_models_list, embedding_path, max_features, should_mi
             max_nb_sent = 3,
             max_sent_len = 50
         )
-        for model in models_list
+        for model in hier_models_list
     ]
 
 
@@ -138,7 +138,7 @@ if __name__ == '__main__':
         SARNNKeras, VDCNN
     ]
     hier_models_list = [
-        HARNN,
+        HARNN
     ]
     parser = argparse.ArgumentParser()
     parser.add_argument(
