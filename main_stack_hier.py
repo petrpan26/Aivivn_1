@@ -16,6 +16,10 @@ from sklearn.metrics import f1_score
 
 from sklearn.linear_model import LogisticRegression
 
+from keras.utils import CustomObjectScope
+from keras_self_attention import SeqSelfAttention, SeqWeightedAttention
+
+
 
 def stack(models_list, hier_models_list, embedding_path, max_features, should_mix):
     model_name = '-'.join(
@@ -158,5 +162,6 @@ if __name__ == '__main__':
         help='Model use'
     )
     args = parser.parse_args()
-    stack(models_list, hier_models_list, args.embedding,
-                int(args.max), args.mix)
+    with CustomObjectScope({'SeqSelfAttention': SeqSelfAttention, 'SeqWeightedAttention': SeqWeightedAttention}):
+        stack(models_list, hier_models_list, args.embedding,
+                    int(args.max), args.mix)
