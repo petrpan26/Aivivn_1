@@ -27,8 +27,10 @@ def stack(models_list, hier_models_list, embedding_path, max_features, should_mi
 
     train_data = read_file('./data/train.crash')
     test_data = read_file('./data/test.crash', is_train=False)
+
     train_tokenized_texts = tokenize(train_data['text'])
     test_tokenizes_texts = tokenize(test_data['text'])
+
     train_tokenized_texts_sent = sent_tokenize(train_data['text'])
     test_tokenizes_texts_sent = sent_tokenize(test_data['text'])
 
@@ -43,7 +45,7 @@ def stack(models_list, hier_models_list, embedding_path, max_features, should_mi
 
     embed_size_sent, word_map_sent, embedding_mat_sent = sent_embedding(
         list(train_tokenized_texts_sent) +
-        list(test_tokenizes_texts_sent) if should_mix else train_tokenized_texts,
+        list(test_tokenizes_texts_sent) if should_mix else train_tokenized_texts_sent,
         embedding_path,
         max_features
     )
@@ -80,7 +82,7 @@ def stack(models_list, hier_models_list, embedding_path, max_features, should_mi
     models = [
         model(
             embeddingMatrix=embedding_mat,
-            embed_size=400,
+            embed_size=embed_size,
             max_features=embedding_mat.shape[0]
         )
         for model in models_list
@@ -89,7 +91,7 @@ def stack(models_list, hier_models_list, embedding_path, max_features, should_mi
     hier_models = [
         model(
             embeddingMatrix=embedding_mat_sent,
-            embed_size=400,
+            embed_size=embed_size_sent,
             max_features=embedding_mat_sent.shape[0],
             max_nb_sent = 3,
             max_sent_len = 50
@@ -101,9 +103,9 @@ def stack(models_list, hier_models_list, embedding_path, max_features, should_mi
 
     stack = StackedGeneralizerWithHier(models, hier_models, meta_model)
     stack.train_meta_model(
-        texts_id_train, labels_train,
-        texts_id_val, labels_val,
-        texts_id_sent, texts_id_sent_val,
+        X = texts_id_train, y = labels_train,
+        X_val = texts_id_val, y_val = labels_val,
+        X_hier = texts_id_sent_train, X_hier_val = texts_id_sent_val,
         model_path = model_path,
         epochs = epochs,
         batch_size = batch_size,
@@ -113,7 +115,7 @@ def stack(models_list, hier_models_list, embedding_path, max_features, should_mi
     stack.train_models(
         X = texts_id_train, y = labels_train,
         X_val = texts_id_val, y_val = labels_val,
-        X_hier = texts_id_sent, X_hier_val = texts_id_sent_val,
+        X_hier = texts_id_sent_train, X_hier_val = texts_id_sent_val,
         batch_size = batch_size,
         epochs = epochs,
         patience = patience,
