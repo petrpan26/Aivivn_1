@@ -1,9 +1,6 @@
 import numpy as np
 from sklearn.model_selection import KFold
-from sklearn.linear_model import LogisticRegression
-
-from scripts.util import read_file, tokenize, make_embedding, text_to_sequences
-from sklearn.model_selection import train_test_split
+from scripts.util import f1
 
 
 from keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -27,6 +24,7 @@ class StackedGeneralizer:
             )
             early = EarlyStopping(monitor='val_f1', mode='max', patience=patience)
             callbacks_list = [checkpoint, early]
+            self._models[ind].compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
             self._models[ind].fit(
                 X, y,
                 validation_data= (X_val, y_val),
@@ -53,6 +51,7 @@ class StackedGeneralizer:
                 y_train, y_test = y[train_index], y[test_index]
 
                 model.save_weights(filepath='{}/dumped.hdf5'.format(model_path))
+
                 checkpoint = ModelCheckpoint(
                     filepath='{}/models.hdf5'.format(model_path),
                     monitor='val_f1', verbose=1,
@@ -73,6 +72,7 @@ class StackedGeneralizer:
                 pred[test_index] = model.predict(X_test).reshape(-1)
 
                 # Reset model:
+                model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
                 model.load_weights(filepath='{}/dumped.hdf5'.format(model_path))
 
             meta_input[:, ind] = pred
@@ -118,6 +118,7 @@ class StackedGeneralizerWithHier:
             )
             early = EarlyStopping(monitor='val_f1', mode='max', patience=patience)
             callbacks_list = [checkpoint, early]
+            self._models[ind].compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
             self._models[ind].fit(
                 X, y,
                 validation_data=(X_val, y_val),
@@ -136,6 +137,7 @@ class StackedGeneralizerWithHier:
             )
             early = EarlyStopping(monitor='val_f1', mode='max', patience=patience)
             callbacks_list = [checkpoint, early]
+            self._hier_models[ind].compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
             self._hier_models[ind].fit(
                 X_hier, y,
                 validation_data=(X_hier_val, y_val),
@@ -155,7 +157,6 @@ class StackedGeneralizerWithHier:
             pred = np.zeros(len(X))
             kf = KFold(n_splits=5, shuffle=False)
             model = self._models[ind]
-            print(self._models)
 
             for train_index, test_index in kf.split(X):
                 X_train, X_test = X[train_index], X[test_index]
@@ -182,6 +183,7 @@ class StackedGeneralizerWithHier:
                 pred[test_index] = model.predict(X_test).reshape(-1)
 
                 # Reset model:
+                model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
                 model.load_weights(filepath='{}/dumped.hdf5'.format(model_path))
 
             meta_input[:, ind] = pred
@@ -216,6 +218,7 @@ class StackedGeneralizerWithHier:
                 pred[test_index] = model.predict(X_test).reshape(-1)
 
                 # Reset model:
+                model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
                 model.load_weights(filepath='{}/dumped.hdf5'.format(model_path))
 
             meta_input[:, len(self._models) + ind] = pred
