@@ -45,12 +45,12 @@ class StackedGeneralizer:
             pred = np.zeros(len(X))
             kf = KFold(n_splits = 5, shuffle = False)
             model = self._models[ind]
+            weights = model.save_weights()
 
             for train_index, test_index in kf.split(X):
                 X_train, X_test = X[train_index], X[test_index]
                 y_train, y_test = y[train_index], y[test_index]
 
-                model.save_weights(filepath='{}/dumped.hdf5'.format(model_path))
 
                 checkpoint = ModelCheckpoint(
                     filepath='{}/models.hdf5'.format(model_path),
@@ -73,7 +73,7 @@ class StackedGeneralizer:
 
                 # Reset model:
                 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
-                model.load_weights(filepath='{}/dumped.hdf5'.format(model_path))
+                model.load_weights(weights)
 
             meta_input[:, ind] = pred
 
@@ -157,12 +157,12 @@ class StackedGeneralizerWithHier:
             pred = np.zeros(len(X))
             kf = KFold(n_splits=5, shuffle=False)
             model = self._models[ind]
+            weights = model.save_weights()
 
             for train_index, test_index in kf.split(X):
                 X_train, X_test = X[train_index], X[test_index]
                 y_train, y_test = y[train_index], y[test_index]
 
-                model.save_weights(filepath='{}/dumped.hdf5'.format(model_path))
                 checkpoint = ModelCheckpoint(
                     filepath='{}/models.hdf5'.format(model_path),
                     monitor='val_f1', verbose=1,
@@ -184,7 +184,7 @@ class StackedGeneralizerWithHier:
 
                 # Reset model:
                 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
-                model.load_weights(filepath='{}/dumped.hdf5'.format(model_path))
+                model.load_weights(weights)
 
             meta_input[:, ind] = pred
 
@@ -192,6 +192,7 @@ class StackedGeneralizerWithHier:
             pred = np.zeros(len(X))
             kf = KFold(n_splits=5, shuffle=False)
             model = self._hier_models[ind]
+            weights = model.save_weights()
 
             for train_index, test_index in kf.split(X):
                 X_train, X_test = X_hier[train_index], X_hier[test_index]
@@ -219,7 +220,7 @@ class StackedGeneralizerWithHier:
 
                 # Reset model:
                 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
-                model.load_weights(filepath='{}/dumped.hdf5'.format(model_path))
+                model.load_weights(weights)
 
             meta_input[:, len(self._models) + ind] = pred
 

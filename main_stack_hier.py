@@ -135,7 +135,7 @@ def stack(models_list, hier_models_list, embedding_path, max_features, should_mi
 
 if __name__ == '__main__':
     models_list = [
-        SARNNKeras, VDCNN
+        VDCNN, SARNNKeras
     ]
     hier_models_list = [
         HARNN
