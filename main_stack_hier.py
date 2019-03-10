@@ -86,7 +86,7 @@ def stack(models_list, hier_models_list, embedding_path, max_features, should_mi
         model(
             embeddingMatrix=embedding_mat_sent,
             embed_size=400,
-            max_features=embedding_mat.shape[0],
+            max_features=embedding_mat_sent.shape[0],
             max_nb_sent = 3,
             max_sent_len = 50
         )
