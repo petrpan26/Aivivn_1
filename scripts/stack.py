@@ -157,6 +157,43 @@ class StackedGeneralizerWithHier:
         # Obtain level-1 input from each model:
         meta_input = np.zeros((len(X), len(self._models) + len(self._hier_models)))
 
+        for ind in range(len(self._hier_models)):
+            pred = np.zeros(len(X))
+            kf = KFold(n_splits=5, shuffle=False)
+            model = self._hier_models[ind]
+            model.save(filepath='{}/dumped.hdf5'.format(model_path))
+
+
+            for train_index, test_index in kf.split(X):
+                X_train, X_test = X_hier[train_index], X_hier[test_index]
+                y_train, y_test = y[train_index], y[test_index]
+
+                checkpoint = ModelCheckpoint(
+                    filepath='{}/models.hdf5'.format(model_path),
+                    monitor='val_f1', verbose=1,
+                    mode='max',
+                    save_best_only=True
+                )
+                early = EarlyStopping(monitor='val_f1', mode='max', patience=patience)
+                callbacks_list = [checkpoint, early]
+                model.fit(
+                    X_train, y_train,
+                    validation_data=(X_hier_val, y_val),
+                    callbacks=callbacks_list,
+                    epochs=epochs,
+                    batch_size=batch_size
+                )
+
+                model.load_weights(filepath='{}/models.hdf5'.format(model_path))
+                pred[test_index] = model.predict(X_test).reshape(-1)
+
+                # Reset model:
+                model = load_model(filepath='{}/dumped.hdf5'.format(model_path))
+                # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
+
+            meta_input[:, len(self._models) + ind] = pred
+
+
         for ind in range(len(self._models)):
             pred = np.zeros(len(X))
             kf = KFold(n_splits=5, shuffle=False)
@@ -193,41 +230,6 @@ class StackedGeneralizerWithHier:
 
             meta_input[:, ind] = pred
 
-        for ind in range(len(self._hier_models)):
-            pred = np.zeros(len(X))
-            kf = KFold(n_splits=5, shuffle=False)
-            model = self._hier_models[ind]
-            model.save(filepath='{}/dumped.hdf5'.format(model_path))
-
-
-            for train_index, test_index in kf.split(X):
-                X_train, X_test = X_hier[train_index], X_hier[test_index]
-                y_train, y_test = y[train_index], y[test_index]
-
-                checkpoint = ModelCheckpoint(
-                    filepath='{}/models.hdf5'.format(model_path),
-                    monitor='val_f1', verbose=1,
-                    mode='max',
-                    save_best_only=True
-                )
-                early = EarlyStopping(monitor='val_f1', mode='max', patience=patience)
-                callbacks_list = [checkpoint, early]
-                model.fit(
-                    X_train, y_train,
-                    validation_data=(X_hier_val, y_val),
-                    callbacks=callbacks_list,
-                    epochs=epochs,
-                    batch_size=batch_size
-                )
-
-                model.load_weights(filepath='{}/models.hdf5'.format(model_path))
-                pred[test_index] = model.predict(X_test).reshape(-1)
-
-                # Reset model:
-                model = load_model(filepath='{}/dumped.hdf5'.format(model_path))
-                # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
-
-            meta_input[:, len(self._models) + ind] = pred
 
         self._meta_model.fit(meta_input, y)
 
