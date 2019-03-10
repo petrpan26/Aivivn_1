@@ -14,7 +14,7 @@ from sklearn.metrics import f1_score
 from sklearn.linear_model import LogisticRegression
 
 
-def stack(models, embedding_path, max_features, should_mix):
+def stack(models_list, embedding_path, max_features, should_mix):
     model_name = '-'.join(
         '.'.join(str(datetime.datetime.now()).split('.')[:-1]).split(' '))
 
@@ -53,6 +53,15 @@ def stack(models, embedding_path, max_features, should_mix):
     patience = 3
 
     meta_model = LogisticRegression()
+    models = [
+        model(
+            embeddingMatrix=embedding_mat,
+            embed_size=400,
+            max_features=embedding_mat.shape[0]
+        )
+        for model in models_list
+    ]
+
 
     stack = StackedGeneralizer(models, meta_model)
     stack.train_meta_model(
@@ -90,7 +99,9 @@ def stack(models, embedding_path, max_features, should_mix):
 
 
 if __name__ == '__main__':
-    models = [SARNNKeras, LSTMCNN, VDCNN]
+    models_list = [
+        SARNNKeras, LSTMCNN, VDCNN
+    ]
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-e',
@@ -109,5 +120,5 @@ if __name__ == '__main__':
         help='Model use'
     )
     args = parser.parse_args()
-    stack(models, args.embedding,
+    stack(models_list, args.embedding,
                 int(args.max), args.mix)
