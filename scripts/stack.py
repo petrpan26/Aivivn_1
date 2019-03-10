@@ -46,7 +46,6 @@ class StackedGeneralizer:
             kf = KFold(n_splits = 5, shuffle = False)
             model = self._models[ind]
             weights = model.get_weights()
-            optim_states = model.optimizer.get_states()
 
 
             for train_index, test_index in kf.split(X):
@@ -75,7 +74,6 @@ class StackedGeneralizer:
 
                 # Reset model:
                 model.set_weights(weights)
-                model.optimizer.get_states(optim_states)
                 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
 
 
@@ -162,7 +160,6 @@ class StackedGeneralizerWithHier:
             kf = KFold(n_splits=5, shuffle=False)
             model = self._models[ind]
             weights = model.get_weights()
-            optim_states = model.optimizer.get_states()
 
             for train_index, test_index in kf.split(X):
                 X_train, X_test = X[train_index], X[test_index]
@@ -189,7 +186,6 @@ class StackedGeneralizerWithHier:
 
                 # Reset model:
                 model.set_weights(weights)
-                model.optimizer.get_states(optim_states)
                 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
 
 
@@ -200,7 +196,6 @@ class StackedGeneralizerWithHier:
             kf = KFold(n_splits=5, shuffle=False)
             model = self._hier_models[ind]
             weights = model.get_weights()
-            optim_states = model.optimizer.get_states()
 
 
             for train_index, test_index in kf.split(X):
@@ -228,7 +223,6 @@ class StackedGeneralizerWithHier:
 
                 # Reset model:
                 model.set_weights(weights)
-                model.optimizer.get_states(optim_states)
                 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
 
             meta_input[:, len(self._models) + ind] = pred
