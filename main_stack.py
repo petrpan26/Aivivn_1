@@ -1,4 +1,4 @@
-from scripts.util import read_file, tokenize, make_embedding, text_to_sequences
+from scripts.util import read_file, tokenize, make_embedding, text_to_sequences, f1
 from scripts.constant import DEFAULT_MAX_FEATURES
 from sklearn.model_selection import train_test_split
 from scripts.rnn import SARNNKeras
@@ -123,7 +123,11 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    with CustomObjectScope({'SeqSelfAttention': SeqSelfAttention, 'SeqWeightedAttention': SeqWeightedAttention}):
+    with CustomObjectScope({
+        'SeqSelfAttention': SeqSelfAttention,
+        'SeqWeightedAttention': SeqWeightedAttention,
+        'f1': f1}
+    ):
         stack(
             models_list, args.embedding, int(args.max), args.mix
         )
