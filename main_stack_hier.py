@@ -4,8 +4,8 @@ from scripts.util import \
     sent_embedding, sent_tokenize, text_sents_to_sequences, f1
 from scripts.constant import DEFAULT_MAX_FEATURES
 from sklearn.model_selection import train_test_split
-from scripts.rnn import SARNNKeras, HARNN
-from scripts.cnn import VDCNN
+from scripts.rnn import SARNNKeras, HARNN, OriginalHARNN, AttLayer
+from scripts.cnn import VDCNN, TextCNN, LSTMCNN
 from scripts.stack import StackedGeneralizerWithHier
 import argparse
 import os
@@ -16,6 +16,7 @@ from sklearn.metrics import f1_score
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
 
 from keras.utils import CustomObjectScope
 from keras_self_attention import SeqSelfAttention, SeqWeightedAttention
@@ -79,11 +80,18 @@ def stack(models_list, hier_models_list, embedding_path, max_features, should_mi
     epochs = 100
     patience = 3
 
-    meta_model = RandomForestClassifier (
-        n_estimators=200,
-        criterion="entropy",
-        max_depth=5,
-        max_features=0.5
+    # meta_model = RandomForestClassifier (
+    #     n_estimators=200,
+    #     criterion="entropy",
+    #     max_depth=5,
+    #     max_features=0.5
+    # )
+    meta_model = MLPClassifier(
+        hidden_layer_sizes = (10),
+        early_stopping = True,
+        validation_fraction = 0.05,
+        batch_size = batch_size,
+        n_iter_no_change = patience
     )
     models = [
         model(
@@ -147,7 +155,7 @@ def stack(models_list, hier_models_list, embedding_path, max_features, should_mi
 
 if __name__ == '__main__':
     models_list = [
-        VDCNN, SARNNKeras
+        VDCNN, TextCNN, SARNNKeras
     ]
     hier_models_list = [
         HARNN
@@ -173,6 +181,7 @@ if __name__ == '__main__':
     with CustomObjectScope({
         'SeqSelfAttention': SeqSelfAttention,
         'SeqWeightedAttention': SeqWeightedAttention,
+        'AttLayer': AttLayer,
         'f1': f1}
     ):
         stack(models_list, hier_models_list, args.embedding,
