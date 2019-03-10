@@ -15,6 +15,7 @@ import pandas as pd
 from sklearn.metrics import f1_score
 
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 
 from keras.utils import CustomObjectScope
 from keras_self_attention import SeqSelfAttention, SeqWeightedAttention
@@ -78,7 +79,12 @@ def stack(models_list, hier_models_list, embedding_path, max_features, should_mi
     epochs = 100
     patience = 3
 
-    meta_model = LogisticRegression()
+    meta_model = RandomForestClassifier (
+        n_estimators=200,
+        criterion="entropy",
+        max_depth=5,
+        max_features=0.5
+    )
     models = [
         model(
             embeddingMatrix=embedding_mat,
