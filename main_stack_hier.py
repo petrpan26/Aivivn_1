@@ -86,13 +86,15 @@ def stack(models_list, hier_models_list, embedding_path, max_features, should_mi
     #     max_depth=5,
     #     max_features=0.5
     # )
-    meta_model = MLPClassifier(
-        hidden_layer_sizes = (10),
-        early_stopping = True,
-        validation_fraction = 0.05,
-        batch_size = batch_size,
-        n_iter_no_change = patience
-    )
+    # meta_model = MLPClassifier(
+    #     hidden_layer_sizes = (10),
+    #     early_stopping = True,
+    #     validation_fraction = 0.05,
+    #     batch_size = batch_size,
+    #     n_iter_no_change = patience
+    # )
+    meta_model = LogisticRegression()
+
     models = [
         model(
             embeddingMatrix=embedding_mat,
