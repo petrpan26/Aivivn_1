@@ -211,16 +211,19 @@ class AttLayer(Layer):
 
     def build(self, input_shape):
         self._W = self.add_weight(
+            name = "W",
             shape = (input_shape[-1], self._context_size),
             initializer="he_normal",
             trainable=True
         )
         self._b = self.add_weight(
+            name = "b",
             shape = (1, self._context_size),
             initializer="constant",
             trainable=True
         )
         self._context = self.add_weight(
+            name = "context",
             shape = (self._context_size, 1),
             initializer = "he_normal",
             trainable = True
