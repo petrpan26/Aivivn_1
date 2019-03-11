@@ -4,7 +4,7 @@ from scripts.util import \
     sent_embedding, sent_tokenize, text_sents_to_sequences, f1
 from scripts.constant import DEFAULT_MAX_FEATURES
 from sklearn.model_selection import train_test_split
-from scripts.rnn import SARNNKeras, HARNN, OriginalHARNN, AttLayer
+from scripts.rnn import SARNNKeras, HARNN, AttLayer, RNNKeras
 from scripts.cnn import VDCNN, TextCNN, LSTMCNN
 from scripts.stack import StackedGeneralizerWithHier
 import argparse
@@ -157,7 +157,7 @@ def stack(models_list, hier_models_list, embedding_path, max_features, should_mi
 
 if __name__ == '__main__':
     models_list = [
-        VDCNN, TextCNN, LSTMCNN, SARNNKeras
+        VDCNN, TextCNN, SARNNKeras, RNNKeras
     ]
     hier_models_list = [
         HARNN
