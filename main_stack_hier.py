@@ -160,7 +160,7 @@ if __name__ == '__main__':
         VDCNN, TextCNN, LSTMCNN, SARNNKeras
     ]
     hier_models_list = [
-        HARNN, OriginalHARNN
+        OriginalHARNN, HARNN
     ]
     parser = argparse.ArgumentParser()
     parser.add_argument(
