@@ -3,19 +3,28 @@ from keras.layers import \
     Dense, Embedding, Input, \
     CuDNNGRU, GRU, LSTM, Bidirectional, CuDNNLSTM, \
     GlobalMaxPool1D, GlobalAveragePooling1D, Dropout, \
-    Lambda, Concatenate, TimeDistributed, Layer
+    Lambda, Concatenate, TimeDistributed
 from .util import f1
 from keras_self_attention import SeqSelfAttention, SeqWeightedAttention
-import keras.backend as K
 from keras.activations import softmax
 from keras_layer_normalization import LayerNormalization
+from .net_components import AttLayer, AdditiveLayer
 
 
 
 
-def RNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100):
-    inp = Input(shape = (maxlen, ))
-    x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix])(inp)
+def RNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, use_fasttext = False, trainable = True, use_additive_emb = False):
+    if use_fasttext:
+        inp = Input(shape=(maxlen, embed_size))
+        x = inp
+    else:
+        inp = Input(shape = (maxlen, ))
+        x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix], trainable = trainable)(inp)
+
+    if use_additive_emb:
+        x = AdditiveLayer()(x)
+        x = Dropout(0.5)(x)
+
     x = Bidirectional(CuDNNGRU(128, return_sequences = True))(x)
     x = Dropout(0.5)(x)
     x = Bidirectional(CuDNNGRU(128, return_sequences = True))(x)
@@ -34,9 +43,19 @@ def RNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, max
     model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
     return model
 
-def RNNKerasCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100):
-    inp = Input(shape = (maxlen, ))
-    x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix])(inp)
+def RNNKerasCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, use_fasttext = False, trainable = True, use_additive_emb = False):
+    if use_fasttext:
+        inp = Input(shape=(maxlen, embed_size))
+        x = inp
+    else:
+        inp = Input(shape = (maxlen, ))
+        x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix], trainable = trainable)(inp)
+
+    if use_additive_emb:
+        x = AdditiveLayer()(x)
+        x = Dropout(0.5)(x)
+
+
     x = Bidirectional(GRU(128, return_sequences = True, recurrent_dropout = 0.5, dropout = 0.5))(x)
     # x = Dropout(0.5)(x)
     x = Bidirectional(GRU(128, return_sequences = True, recurrent_dropout = 0.5, dropout = 0.5))(x)
@@ -71,9 +90,19 @@ def LSTMKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, ma
     return model
 
 
-def SARNNKerasCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100):
-    inp = Input(shape = (maxlen, ))
-    x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix])(inp)
+def SARNNKerasCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, use_fasttext = False, trainable = True, use_additive_emb = False):
+    if use_fasttext:
+        inp = Input(shape=(maxlen, embed_size))
+        x = inp
+    else:
+        inp = Input(shape = (maxlen, ))
+        x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix], trainable = trainable)(inp)
+
+    if use_additive_emb:
+        x = AdditiveLayer()(x)
+        x = Dropout(0.5)(x)
+
+
     x = Bidirectional(LSTM(128, return_sequences = True))(x)
     x = SeqSelfAttention(
         # attention_type = SeqSelfAttention.ATTENTION_TYPE_MUL,
@@ -94,9 +123,19 @@ def SARNNKerasCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000
     model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
     return model
 
-def SARNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, rnn_type = CuDNNLSTM):
-    inp = Input(shape = (maxlen, ))
-    x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix])(inp)
+def SARNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, rnn_type = CuDNNLSTM, use_fasttext = False, trainable = True, use_additive_emb = False):
+    if use_fasttext:
+        inp = Input(shape=(maxlen, embed_size))
+        x = inp
+    else:
+        inp = Input(shape = (maxlen, ))
+        x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix], trainable = trainable)(inp)
+
+    if use_additive_emb:
+        x = AdditiveLayer()(x)
+        x = Dropout(0.5)(x)
+
+
     x = Bidirectional(rnn_type(128, return_sequences = True))(x)
     x = SeqSelfAttention(
         # attention_type = SeqSelfAttention.ATTENTION_TYPE_MUL,
@@ -118,14 +157,19 @@ def SARNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, m
     return model
 
 
-def HRNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40):
+def HRNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, trainable = True, use_additive_emb = False):
     sent_inp = Input(shape = (max_sent_len, ))
     embed = Embedding(
         input_dim = max_features,
         output_dim = embed_size,
         weights = [embeddingMatrix],
-        trainable = True
+        trainable = trainable
     )(sent_inp)
+
+    if use_additive_emb:
+        embed = AdditiveLayer()(embed)
+        embed = Dropout(0.5)(embed)
+
     word_lstm = Bidirectional(LSTM(128, dropout = 0.2, recurrent_dropout = 0.2))(embed)
     sent_encoder = Model(sent_inp, word_lstm)
 
@@ -137,14 +181,19 @@ def HRNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_
     model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
     return model
 
-def HRNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40):
+def HRNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, trainable = True, use_additive_emb = False):
     sent_inp = Input(shape = (max_sent_len, ))
     embed = Embedding(
         input_dim = max_features,
         output_dim = embed_size,
         weights = [embeddingMatrix],
-        trainable = True
+        trainable = trainable
     )(sent_inp)
+
+    if use_additive_emb:
+        embed = AdditiveLayer()(embed)
+        embed = Dropout(0.5)(embed)
+
     word_lstm = Bidirectional(CuDNNLSTM(128))(embed)
     sent_encoder = Model(sent_inp, word_lstm)
 
@@ -157,14 +206,19 @@ def HRNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_
     return model
 
 
-def OriginalHARNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40):
+def OriginalHARNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, trainable = True, use_additive_emb = False):
     sent_inp = Input(shape = (max_sent_len, ))
     embed = Embedding(
         input_dim = max_features,
         output_dim = embed_size,
         weights = [embeddingMatrix],
-        trainable = True
+        trainable = trainable
     )(sent_inp)
+
+    if use_additive_emb:
+        embed = AdditiveLayer()(embed)
+        embed = Dropout(0.5)(embed)
+
     word_lstm = Bidirectional(LSTM(128, dropout = 0.5, recurrent_dropout = 0.5, return_sequences = True))(embed)
     word_att = AttLayer(context_size = 256)(word_lstm)
     sent_encoder = Model(sent_inp, word_att)
@@ -178,14 +232,19 @@ def OriginalHARNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20
     model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
     return model
 
-def OriginalHARNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40):
+def OriginalHARNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, trainable = True, use_additive_emb = False):
     sent_inp = Input(shape = (max_sent_len, ))
     embed = Embedding(
         input_dim = max_features,
         output_dim = embed_size,
         weights = [embeddingMatrix],
-        trainable = True
+        trainable = trainable
     )(sent_inp)
+
+    if use_additive_emb:
+        embed = AdditiveLayer()(embed)
+        embed = Dropout(0.5)(embed)
+
     word_lstm = Bidirectional(CuDNNLSTM(128, return_sequences = True))(embed)
     word_att = AttLayer(context_size = 256)(word_lstm)
     word_att = Dropout(0.5)(word_att)
@@ -202,68 +261,22 @@ def OriginalHARNN(embeddingMatrix = None, embed_size = 400, max_features = 20000
     return model
 
 
-class AttLayer(Layer):
-    def __init__(self, context_size):
-        self._context_size = context_size
-        self.supports_masking = True
-        # self._linear = Dense(context_size, activation = "tanh")
-        super(AttLayer, self).__init__()
-
-    def build(self, input_shape):
-        self._W = self.add_weight(
-            name = "W",
-            shape = (input_shape[-1], self._context_size),
-            initializer="he_normal",
-            trainable=True
-        )
-        self._b = self.add_weight(
-            name = "b",
-            shape = (1, self._context_size),
-            initializer="constant",
-            trainable=True
-        )
-        self._context = self.add_weight(
-            name = "context",
-            shape = (self._context_size, 1),
-            initializer = "he_normal",
-            trainable = True
-        )
-        super(AttLayer, self).build(input_shape)
 
 
-    def compute_mask(self, input, input_mask=None):
-        return input_mask
-
-
-    def call(self, input, mask = None):
-        # input: (N, T, M)
-        rep = K.tanh(K.dot(input, self._W) + self._b) # (N, T, C)
-        score = K.squeeze(K.dot(rep, self._context), axis = -1) # (N, T)
-
-        weight = K.exp(score)
-        if mask is not None:
-            weight *= K.cast(mask, K.floatx())
-
-        weight /= K.cast(K.sum(weight, axis = 1, keepdims = True) + K.epsilon(), K.floatx())
-
-
-        # weight = softmax(score, axis = -1) # (N, T)
-        op = K.batch_dot(input, weight, axes = (1, 1)) # (N, M)
-
-        return op
-
-    def compute_output_shape(self, input_shape):
-        return (input_shape[0], input_shape[-1])
-
-
-def HARNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40):
+def HARNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, trainable = True, use_additive_emb = False):
     sent_inp = Input(shape = (max_sent_len, ))
     embed = Embedding(
         input_dim = max_features,
         output_dim = embed_size,
         weights = [embeddingMatrix],
-        trainable = True
+        trainable = trainable
     )(sent_inp)
+
+    if use_additive_emb:
+        embed = AdditiveLayer()(embed)
+        embed = Dropout(0.5)(embed)
+
+
     word_lstm = Bidirectional(LSTM(128, dropout = 0.5, recurrent_dropout = 0.5, return_sequences = True))(embed)
     word_att = SeqWeightedAttention()(word_lstm)
     sent_encoder = Model(sent_inp, word_att)
@@ -279,14 +292,19 @@ def HARNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max
 
 
 
-def HARNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40):
+def HARNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, trainable = True, use_additive_emb = False):
     sent_inp = Input(shape = (max_sent_len, ))
     embed = Embedding(
         input_dim = max_features,
         output_dim = embed_size,
         weights = [embeddingMatrix],
-        trainable = True
+        trainable = trainable
     )(sent_inp)
+
+    if use_additive_emb:
+        embed = AdditiveLayer()(embed)
+        embed = Dropout(0.5)(embed)
+
     word_lstm = Bidirectional(CuDNNLSTM(128, return_sequences = True))(embed)
     word_att = SeqWeightedAttention()(word_lstm)
     word_att = Dropout(0.5)(word_att)

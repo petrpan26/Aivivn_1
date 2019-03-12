@@ -6,6 +6,15 @@ from scripts.util import f1
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.models import load_model
 
+from keras.models import Model
+from keras.layers import \
+    Dense, Embedding, Input, \
+    Conv1D, MaxPool1D, \
+    Dropout, BatchNormalization, \
+    Bidirectional, CuDNNLSTM, \
+    Concatenate, Flatten, Add
+
+
 
 class StackedGeneralizer:
 
@@ -46,8 +55,8 @@ class StackedGeneralizer:
             pred = np.zeros(len(X))
             kf = KFold(n_splits = 5, shuffle = False)
             model = self._models[ind]
-            model.save(filepath='{}/dumped.hdf5'.format(model_path))
-            # weights = model.get_weights()
+            # model.save(filepath='{}/dumped.hdf5'.format(model_path))
+            weights = model.get_weights()
 
 
             for train_index, test_index in kf.split(X):
@@ -71,7 +80,7 @@ class StackedGeneralizer:
                     batch_size=batch_size
                 )
 
-                model.load_weights(filepath='{}/models.hdf5'.format(model_path))
+                model.set_weights(weights)
                 pred[test_index] = model.predict(X_test).reshape(-1)
 
                 # Reset model:
@@ -113,6 +122,7 @@ class StackedGeneralizerWithHier:
 
     def train_models(self, X, y, X_val, y_val, X_hier, X_hier_val, model_path, epochs, batch_size,
                      patience):
+
         for ind in range(len(self._models)):
             checkpoint = ModelCheckpoint(
                 filepath='{}/models.hdf5'.format(model_path),
@@ -161,10 +171,10 @@ class StackedGeneralizerWithHier:
             pred = np.zeros(len(X))
             kf = KFold(n_splits=5, shuffle=False)
             model = self._hier_models[ind]
-            model.save(filepath='{}/dumped.hdf5'.format(model_path))
+            weights = model.get_weights()
 
 
-            for train_index, test_index in kf.split(X):
+            for train_index, test_index in kf.split(X_hier):
                 X_train, X_test = X_hier[train_index], X_hier[test_index]
                 y_train, y_test = y[train_index], y[test_index]
 
@@ -188,8 +198,8 @@ class StackedGeneralizerWithHier:
                 pred[test_index] = model.predict(X_test).reshape(-1)
 
                 # Reset model:
-                model = load_model(filepath='{}/dumped.hdf5'.format(model_path))
-                # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
+                model = model.set_weights(weights)
+                model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
 
             meta_input[:, len(self._models) + ind] = pred
 
@@ -198,7 +208,7 @@ class StackedGeneralizerWithHier:
             pred = np.zeros(len(X))
             kf = KFold(n_splits=5, shuffle=False)
             model = self._models[ind]
-            model.save(filepath='{}/dumped.hdf5'.format(model_path))
+            weights = model.get_weights()
 
             for train_index, test_index in kf.split(X):
                 X_train, X_test = X[train_index], X[test_index]
@@ -224,8 +234,8 @@ class StackedGeneralizerWithHier:
                 pred[test_index] = model.predict(X_test).reshape(-1)
 
                 # Reset model:
-                model = load_model(filepath='{}/dumped.hdf5'.format(model_path))
-                # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
+                model.set_weights(weights)
+                model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1])
 
 
             meta_input[:, ind] = pred
@@ -255,5 +265,17 @@ class StackedGeneralizerWithHier:
 
         for ind in range(len(self._hier_models)):
             self._hier_models[ind].load_weights(paths_hier[ind])
+
+
+def StackMLP(n_model):
+    inp = Input(shape = (n_model,))
+    op = Dense(10, activation = "relu")(inp)
+    op = BatchNormalization()(op)
+    op = Dense(1, activation = "sigmoid")(op)
+
+    model = Model(inputs = inp, outputs = op)
+    model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
+    return model
+
 
 

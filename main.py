@@ -14,7 +14,7 @@ from scripts.util import find_threshold
 from sklearn.metrics import f1_score
 
 
-def train_model(model, embedding_path, max_features, should_find_threshold, should_mix, return_prob):
+def train_model(model, embedding_path, max_features, should_find_threshold, should_mix, return_prob, trainable, use_additive_emb):
     model_name = '-'.join(
         '.'.join(str(datetime.datetime.now()).split('.')[:-1]).split(' '))
 
@@ -62,7 +62,9 @@ def train_model(model, embedding_path, max_features, should_find_threshold, shou
     model = model(
         embeddingMatrix=embedding_mat,
         embed_size=embed_size,
-        max_features=embedding_mat.shape[0]
+        max_features=embedding_mat.shape[0],
+        trainable = trainable,
+        use_additive_emb = use_additive_emb
     )
     model.fit(
         texts_id_train, labels_train,
@@ -143,8 +145,18 @@ if __name__ == '__main__':
         action='store_true',
         help='Model use'
     )
+    parser.add_argument(
+        '--fixed_embed',
+        action='store_true',
+        help='Model use'
+    )
+    parser.add_argument(
+        '--add_embed',
+        action='store_true',
+        help='Model use'
+    )
     args = parser.parse_args()
     if not args.model in model_dict:
         raise RuntimeError('Model not found')
     train_model(model_dict[args.model], args.embedding,
-                int(args.max), args.find_threshold, args.mix, args.prob)
+                int(args.max), args.find_threshold, args.mix, args.prob, args.fixed_embed, args.add_embed)
