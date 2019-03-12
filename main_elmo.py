@@ -30,7 +30,7 @@ def train_model(model, embedding_path, should_find_threshold, return_prob, use_a
 
         ret = []
         for sentence in texts:
-            sentence = np.array(sentence, dtype=np.unicode)
+            sentence = np.array([token.replace("_", " ") for token in sentence], dtype=np.unicode)
             sentence = sentence[:min(length, len(sentence))]
             if length > len(sentence):
                 sentence = np.pad(
