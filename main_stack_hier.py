@@ -4,7 +4,7 @@ from scripts.util import \
     sent_embedding, sent_tokenize, text_sents_to_sequences, f1
 from scripts.constant import DEFAULT_MAX_FEATURES
 from sklearn.model_selection import train_test_split
-from scripts.rnn import SARNNKeras, HARNN, AttLayer, RNNKeras
+from scripts.rnn import SARNNKeras, HARNN, AttLayer, RNNKeras, OriginalHARNN, AdditiveLayer
 from scripts.cnn import VDCNN, TextCNN, LSTMCNN
 from scripts.stack import StackedGeneralizerWithHier
 import argparse
@@ -160,7 +160,7 @@ if __name__ == '__main__':
         VDCNN, TextCNN, SARNNKeras, RNNKeras
     ]
     hier_models_list = [
-        HARNN
+        OriginalHARNN, HARNN
     ]
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -184,7 +184,8 @@ if __name__ == '__main__':
         'SeqSelfAttention': SeqSelfAttention,
         'SeqWeightedAttention': SeqWeightedAttention,
         'AttLayer': AttLayer,
-        'f1': f1}
-    ):
+        'AdditiveLayer': AdditiveLayer,
+        'f1': f1
+    }):
         stack(models_list, hier_models_list, args.embedding,
                     int(args.max), args.mix)
