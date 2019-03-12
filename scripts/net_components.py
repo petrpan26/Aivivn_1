@@ -64,7 +64,7 @@ class AdditiveLayer(Layer):
         self._w = self.add_weight(
             name = "w",
             shape = (1, input_shape[-1]),
-            initializer="he_normal",
+            initializer="constant",
             trainable=True
         )
         super(AdditiveLayer, self).build(input_shape)
