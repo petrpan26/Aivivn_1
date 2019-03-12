@@ -146,7 +146,7 @@ if __name__ == '__main__':
         help='Model use'
     )
     parser.add_argument(
-        '--fixed_embed',
+        '--train_embed',
         action='store_true',
         help='Model use'
     )
@@ -159,4 +159,4 @@ if __name__ == '__main__':
     if not args.model in model_dict:
         raise RuntimeError('Model not found')
     train_model(model_dict[args.model], args.embedding,
-                int(args.max), args.find_threshold, args.mix, args.prob, args.fixed_embed, args.add_embed)
+                int(args.max), args.find_threshold, args.mix, args.prob, args.train_embed, args.add_embed)

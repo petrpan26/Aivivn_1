@@ -6,14 +6,20 @@ from keras.layers import \
     Bidirectional, CuDNNLSTM, \
     Concatenate, Flatten, Add
 from .util import f1
+from .net_components import AdditiveLayer
 
 
 
 # Based on https://richliao.github.io/supervised/classification/2016/11/26/textclassifier-convolutional/
 # https://www.aclweb.org/anthology/D14-1181
-def TextCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, filter_sizes = {2, 3, 4, 5}):
+def TextCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, filter_sizes = {2, 3, 4, 5}, trainable = True, use_additive_emb = False):
     inp = Input(shape = (maxlen, ))
-    x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix])(inp)
+    x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix], trainable = trainable)(inp)
+
+    if use_additive_emb:
+        x = AdditiveLayer()(x)
+        x = Dropout(0.5)(x)
+
 
     conv_ops = []
     for filter_size in filter_sizes:
@@ -49,9 +55,13 @@ def TextCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxl
     return model
 
 
-def VDCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, filter_sizes = {2, 3, 4, 5}):
+def VDCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, filter_sizes = {2, 3, 4, 5}, trainable = True, use_additive_emb = False):
     inp = Input(shape = (maxlen, ))
-    x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix])(inp)
+    x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix], trainable = trainable)(inp)
+
+    if use_additive_emb:
+        x = AdditiveLayer()(x)
+        x = Dropout(0.5)(x)
 
     conv_ops = []
     for filter_size in filter_sizes:
@@ -97,11 +107,15 @@ def VDCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen
 
 
 # Based on http://konukoii.com/blog/2018/02/19/twitter-sentiment-analysis-using-combined-lstm-cnn-models/
-def LSTMCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, filter_sizes = {2, 3, 4, 5}):
+def LSTMCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, filter_sizes = {2, 3, 4, 5}, trainable = True, use_additive_emb = False):
     inp = Input(shape = (maxlen, ))
-    x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix])(inp)
+    x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix], trainable = trainable)(inp)
     x = Bidirectional(CuDNNLSTM(128, return_sequences = True))(x)
-    x = Dropout(0.5)(x)
+
+    if use_additive_emb:
+        x = AdditiveLayer()(x)
+        x = Dropout(0.5)(x)
+
 
     conv_ops = []
     for filter_size in filter_sizes:
