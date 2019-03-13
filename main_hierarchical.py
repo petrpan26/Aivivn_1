@@ -28,6 +28,10 @@ def train_model(
     test_tokenizes_texts = sent_tokenize(test_data['text'])
     labels = train_data['label'].values.astype(np.float16).reshape(-1, 1)
 
+    train_tokenized_texts, val_tokenized_texts, labels_train, labels_val = train_test_split(
+        train_tokenized_texts, labels, test_size=0.05
+    )
+
     augment_size = int(augment_size)
     if augment_size != 0:
         if augment_size < 0:
@@ -42,22 +46,38 @@ def train_model(
         )
 
     embed_size, word_map, embedding_mat = sent_embedding(
-        list(train_tokenized_texts) +
-        list(test_tokenizes_texts) if should_mix else train_tokenized_texts,
+        list(train_tokenized_texts) + list(val_tokenized_texts) +
+        list(test_tokenizes_texts) if should_mix
+        else list(train_tokenized_texts) + list(val_tokenized_texts),
         embedding_path,
         max_features
     )
 
-    texts_id = text_sents_to_sequences(
+    texts_id_train = text_sents_to_sequences(
         train_tokenized_texts,
         word_map,
         max_nb_sent = max_nb_sent,
         max_sent_len = max_sent_len
     )
+
+    texts_id_val = text_sents_to_sequences(
+        val_tokenized_texts,
+        word_map,
+        max_nb_sent = max_nb_sent,
+        max_sent_len = max_sent_len
+    )
+
+
+    # texts_id = text_sents_to_sequences(
+    #     train_tokenized_texts,
+    #     word_map,
+    #     max_nb_sent = max_nb_sent,
+    #     max_sent_len = max_sent_len
+    # )
     print('Number of train data: {}'.format(labels.shape))
 
-    texts_id_train, texts_id_val, labels_train, labels_val = train_test_split(
-        texts_id, labels, test_size=0.05)
+    # texts_id_train, texts_id_val, labels_train, labels_val = train_test_split(
+    #     texts_id, labels, test_size=0.05)
 
     model_path = './models/{}-version'.format(model_name)
 
