@@ -1,6 +1,6 @@
 import numpy as np
 
-def shuffle_augment(texts, labels, n_increase, only_long = False):
+def shuffle_augment(texts, labels, n_increase, only_long = True):
     texts_long = []
     labels_long = []
 
