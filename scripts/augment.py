@@ -55,16 +55,23 @@ def similar_augment(texts, labels, n_increase, n_word_replace, model_path, simil
             try:
 
                 closest, score = w2v.wv.most_similar(
-                    word, topn = 1,
+                    word, topn = 2,
                     indexer = indexer if use_annoy else None
-                )[0]
-                if score > similar_threshold:
-                    text_copy[word_ind] = closest
+                )[1]
+                # if score > similar_threshold:
+                print(word)
+                print(closest)
+                text_copy[word_ind] = closest
             except:
                 continue
 
         texts.append(text_copy)
         labels = np.append(labels, [labels_long[ind]])
+        if (ind % 100 == 0):
+            print(text_copy)
+            print(texts_long[ind])
+            print(labels_long[ind])
+            print()
 
     return texts, labels
 
