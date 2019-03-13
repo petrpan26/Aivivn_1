@@ -32,6 +32,8 @@ def train_model(
         if augment_size == -1:
             augment_size = len(train_tokenized_texts)
 
+        print(augment_size)
+
         train_tokenized_texts, labels = shuffle_augment(
             train_tokenized_texts,
             labels,
