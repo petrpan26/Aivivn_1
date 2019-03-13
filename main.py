@@ -156,7 +156,7 @@ if __name__ == '__main__':
         default='./embeddings/smallFasttext.vi.vec'
     )
     parser.add_argument(
-        '-e',
+        '-annoy',
         '--annoy',
         help='Model use',
         default='./embeddings/annoy.pkl'
