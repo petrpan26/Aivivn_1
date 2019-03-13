@@ -18,7 +18,7 @@ from sklearn.metrics import f1_score
 def train_model(
         model, embedding_path, annoy_path,
         max_features, should_find_threshold, should_mix,
-        return_prob, trainable, use_additive_emb, augment_size, use_sym_dict
+        return_prob, trainable, use_additive_emb, augment_size, use_sim_dict
 ):
     model_name = '-'.join(
         '.'.join(str(datetime.datetime.now()).split('.')[:-1]).split(' '))
@@ -36,7 +36,7 @@ def train_model(
     )
 
 
-    if augment_size != 0 and not use_sym_dict:
+    if augment_size != 0 and not use_sim_dict:
         if augment_size < 0:
             augment_size = len(train_tokenized_texts) * (-augment_size)
 
@@ -62,7 +62,7 @@ def train_model(
 
     texts_id_train = text_to_sequences(train_tokenized_texts, word_map)
 
-    if augment_size != 0 and use_sym_dict:
+    if augment_size != 0 and use_sim_dict:
         if augment_size < 0:
             augment_size = len(train_tokenized_texts) * (-augment_size)
         sim_dict = create_sim_dict(word_map, model_path = embedding_path, annoy_path  = annoy_path)
@@ -216,4 +216,4 @@ if __name__ == '__main__':
     if not args.model in model_dict:
         raise RuntimeError('Model not found')
     train_model(model_dict[args.model], args.embedding, args.annoy,
-                int(args.max), args.find_threshold, args.mix, args.prob, args.fix_embed, args.add_embed, args.aug, args.use_sym_dict)
+                int(args.max), args.find_threshold, args.mix, args.prob, args.fix_embed, args.add_embed, args.aug, args.use_sim_dict)
