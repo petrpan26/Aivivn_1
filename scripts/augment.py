@@ -36,7 +36,7 @@ def similar_augment(texts, labels, n_increase, n_word_replace, model_path, simil
             texts_long.append(texts[ind])
             labels_long.append(labels[ind])
 
-    shuffle_ind = np.random.choice(len(texts), size = n_increase)
+    shuffle_ind = np.random.choice(len(texts_long), size = n_increase)
     for ind in shuffle_ind:
         text_copy = copy.deepcopy(texts_long[ind])
         # if is_hier:
