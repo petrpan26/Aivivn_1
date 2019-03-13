@@ -28,10 +28,17 @@ def shuffle_augment(texts, labels, n_increase, min_length = 1):
 
 def similar_augment(texts, labels, n_increase, n_word_replace, model_path, similar_threshold = 0.5):
     w2v = KeyedVectors.load_word2vec_format(model_path, binary=True)
+    texts_long = []
+    labels_long = []
+
+    for ind in range(len(texts)):
+        if len(texts[ind]) >= n_word_replace:
+            texts_long.append(texts[ind])
+            labels_long.append(labels[ind])
 
     shuffle_ind = np.random.choice(len(texts), size = n_increase)
     for ind in shuffle_ind:
-        text_copy = copy.deepcopy(texts[ind])
+        text_copy = copy.deepcopy(texts_long[ind])
         # if is_hier:
 
         replace_inds = np.random.choice(text_copy.shape[-1], size = n_word_replace, replace = False)
@@ -45,7 +52,7 @@ def similar_augment(texts, labels, n_increase, n_word_replace, model_path, simil
                 continue
 
         texts.append(text_copy)
-        labels = np.append(labels, [labels[ind]])
+        labels = np.append(labels, [labels_long[ind]])
 
     return texts, labels
 
