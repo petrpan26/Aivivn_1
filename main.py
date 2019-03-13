@@ -11,12 +11,19 @@ import numpy as np
 import datetime
 import pandas as pd
 from scripts.util import find_threshold
+from scripts.augment import similar_augment
 from sklearn.metrics import f1_score
 
 
-def train_model(model, embedding_path, max_features, should_find_threshold, should_mix, return_prob, trainable, use_additive_emb):
+def train_model(
+        model, embedding_path,
+        max_features, should_find_threshold, should_mix,
+        return_prob, trainable, use_additive_emb, augment_size
+):
     model_name = '-'.join(
         '.'.join(str(datetime.datetime.now()).split('.')[:-1]).split(' '))
+
+    augment_size = int(augment_size)
 
     train_data = read_file('./data/train.crash')
     test_data = read_file('./data/test.crash', is_train=False)
@@ -24,18 +31,39 @@ def train_model(model, embedding_path, max_features, should_find_threshold, shou
     test_tokenizes_texts = tokenize(test_data['text'])
     labels = train_data['label'].values.astype(np.float16).reshape(-1, 1)
 
+    train_tokenized_texts, val_tokenized_texts, labels_train, labels_val = train_test_split(
+        train_tokenized_texts, labels, test_data = 0.05
+    )
+
+
+    if augment_size != 0:
+        if augment_size < 0:
+            augment_size = len(train_tokenized_texts) * (-augment_size)
+
+        print(augment_size)
+
+        train_tokenized_texts, labels_train = similar_augment(
+            train_tokenized_texts,
+            labels_train,
+            n_increase = augment_size,
+            model_path = embedding_path,
+            n_word_replace = 3
+        )
+
+
     embed_size, word_map, embedding_mat = make_embedding(
-        list(train_tokenized_texts) +
-        list(test_tokenizes_texts) if should_mix else train_tokenized_texts,
+        list(train_tokenized_texts) + list(val_tokenized_texts) +
+        list(test_tokenizes_texts) if should_mix else list(train_tokenized_texts) + list(val_tokenized_texts),
         embedding_path,
         max_features
     )
 
-    texts_id = text_to_sequences(train_tokenized_texts, word_map)
+    texts_id_train = text_to_sequences(train_tokenized_texts, word_map)
+    texts_id_val = text_to_sequences(val_tokenized_texts, word_map)
     print('Number of train data: {}'.format(labels.shape))
 
-    texts_id_train, texts_id_val, labels_train, labels_val = train_test_split(
-        texts_id, labels, test_size=0.05)
+    # texts_id_train, texts_id_val, labels_train, labels_val = train_test_split(
+    #     texts_id, labels, test_size=0.05)
 
     model_path = './models/{}-version'.format(model_name)
 
@@ -131,6 +159,11 @@ if __name__ == '__main__':
         default=DEFAULT_MAX_FEATURES
     )
     parser.add_argument(
+        '--aug',
+        help='Model use',
+        default=0
+    )
+    parser.add_argument(
         '--find_threshold',
         action='store_true',
         help='Model use'
@@ -159,4 +192,4 @@ if __name__ == '__main__':
     if not args.model in model_dict:
         raise RuntimeError('Model not found')
     train_model(model_dict[args.model], args.embedding,
-                int(args.max), args.find_threshold, args.mix, args.prob, args.train_embed, args.add_embed)
+                int(args.max), args.find_threshold, args.mix, args.prob, args.train_embed, args.add_embed, args.aug)
