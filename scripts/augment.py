@@ -1,12 +1,12 @@
 import numpy as np
 
-def shuffle_augment(texts, labels, n_increase, only_long = True):
+def shuffle_augment(texts, labels, n_increase, min_length = 1):
     texts_long = []
     labels_long = []
 
-    if only_long:
+    if min_length > 1:
         for ind in range(len(texts)):
-            if len(texts[ind]) > 1:
+            if len(texts[ind]) > min_length:
                 texts_long.append(texts[ind])
                 labels_long.append(labels[ind])
     else:

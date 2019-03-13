@@ -17,7 +17,7 @@ def train_model(
         model, embedding_path,
         max_features, max_nb_sent, max_sent_len,
         should_find_threshold, should_mix,
-        return_prob, trainable, use_additive_emb, augment_size
+        return_prob, trainable, use_additive_emb, augment_size, aug_min_len
 ):
     model_name = '-'.join(
         '.'.join(str(datetime.datetime.now()).split('.')[:-1]).split(' '))
@@ -42,7 +42,8 @@ def train_model(
         train_tokenized_texts, labels_train = shuffle_augment(
             train_tokenized_texts,
             labels_train,
-            n_increase = augment_size
+            n_increase = augment_size,
+            min_length = aug_min_len
         )
 
     embed_size, word_map, embedding_mat = sent_embedding(
@@ -194,6 +195,11 @@ if __name__ == '__main__':
         default=0
     )
     parser.add_argument(
+        '--aug_min_len',
+        help='Model use',
+        default=1
+    )
+    parser.add_argument(
         '--find_threshold',
         action='store_true',
         help='Model use'
@@ -225,5 +231,5 @@ if __name__ == '__main__':
         model_dict[args.model], args.embedding,
         int(args.max), args.nb_sent, args.sent_len,
         args.find_threshold, args.mix, args.prob,
-        args.train_embed, args.add_embed, args.aug
+        args.train_embed, args.add_embed, args.aug, args.aug_min_len
     )
