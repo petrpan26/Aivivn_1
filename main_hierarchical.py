@@ -28,9 +28,10 @@ def train_model(
     test_tokenizes_texts = sent_tokenize(test_data['text'])
     labels = train_data['label'].values.astype(np.float16).reshape(-1, 1)
 
+    augment_size = int(augment_size)
     if augment_size != 0:
-        if augment_size == -1:
-            augment_size = len(train_tokenized_texts)
+        if augment_size < 0:
+            augment_size = len(train_tokenized_texts) * (-augment_size)
 
         print(augment_size)
 
