@@ -9,10 +9,16 @@ import numpy as np
 import datetime
 import pandas as pd
 from scripts.util import find_threshold
+from scripts.augment import shuffle_augment
 from sklearn.metrics import f1_score
 
 
-def train_model(model, embedding_path, max_features, max_nb_sent, max_sent_len, should_find_threshold, should_mix, return_prob, trainable, use_additive_emb):
+def train_model(
+        model, embedding_path,
+        max_features, max_nb_sent, max_sent_len,
+        should_find_threshold, should_mix,
+        return_prob, trainable, use_additive_emb, augment_size
+):
     model_name = '-'.join(
         '.'.join(str(datetime.datetime.now()).split('.')[:-1]).split(' '))
 
@@ -21,6 +27,16 @@ def train_model(model, embedding_path, max_features, max_nb_sent, max_sent_len, 
     train_tokenized_texts = sent_tokenize(train_data['text'])
     test_tokenizes_texts = sent_tokenize(test_data['text'])
     labels = train_data['label'].values.astype(np.float16).reshape(-1, 1)
+
+    if augment_size != 0:
+        if augment_size == -1:
+            augment_size = len(train_tokenized_texts)
+
+        train_tokenized_texts, labels = shuffle_augment(
+            train_tokenized_texts,
+            labels,
+            n_increase = augment_size
+        )
 
     embed_size, word_map, embedding_mat = sent_embedding(
         list(train_tokenized_texts) +
@@ -150,6 +166,11 @@ if __name__ == '__main__':
         default=50
     )
     parser.add_argument(
+        '--aug',
+        help='Model use',
+        default=0
+    )
+    parser.add_argument(
         '--find_threshold',
         action='store_true',
         help='Model use'
@@ -177,5 +198,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if not args.model in model_dict:
         raise RuntimeError('Model not found')
-    train_model(model_dict[args.model], args.embedding,
-                int(args.max), args.nb_sent, args.sent_len, args.find_threshold, args.mix, args.prob, args.train_embed, args.add_embed)
+    train_model(
+        model_dict[args.model], args.embedding,
+        int(args.max), args.nb_sent, args.sent_len,
+        args.find_threshold, args.mix, args.prob,
+        args.train_embed, args.add_embed, args.aug
+    )

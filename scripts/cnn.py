@@ -12,9 +12,13 @@ from .net_components import AdditiveLayer
 
 # Based on https://richliao.github.io/supervised/classification/2016/11/26/textclassifier-convolutional/
 # https://www.aclweb.org/anthology/D14-1181
-def TextCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, filter_sizes = {2, 3, 4, 5}, trainable = True, use_additive_emb = False):
-    inp = Input(shape = (maxlen, ))
-    x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix], trainable = trainable)(inp)
+def TextCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, filter_sizes = {2, 3, 4, 5}, use_fasttext = False, trainable = True, use_additive_emb = False):
+    if use_fasttext:
+        inp = Input(shape=(maxlen, embed_size))
+        x = inp
+    else:
+        inp = Input(shape = (maxlen, ))
+        x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix], trainable = trainable)(inp)
 
     if use_additive_emb:
         x = AdditiveLayer()(x)
@@ -55,9 +59,13 @@ def TextCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxl
     return model
 
 
-def VDCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, filter_sizes = {2, 3, 4, 5}, trainable = True, use_additive_emb = False):
-    inp = Input(shape = (maxlen, ))
-    x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix], trainable = trainable)(inp)
+def VDCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, filter_sizes = {2, 3, 4, 5}, use_fasttext = False, trainable = True, use_additive_emb = False):
+    if use_fasttext:
+        inp = Input(shape=(maxlen, embed_size))
+        x = inp
+    else:
+        inp = Input(shape = (maxlen, ))
+        x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix], trainable = trainable)(inp)
 
     if use_additive_emb:
         x = AdditiveLayer()(x)
@@ -107,14 +115,19 @@ def VDCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen
 
 
 # Based on http://konukoii.com/blog/2018/02/19/twitter-sentiment-analysis-using-combined-lstm-cnn-models/
-def LSTMCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, filter_sizes = {2, 3, 4, 5}, trainable = True, use_additive_emb = False):
-    inp = Input(shape = (maxlen, ))
-    x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix], trainable = trainable)(inp)
-    x = Bidirectional(CuDNNLSTM(128, return_sequences = True))(x)
+def LSTMCNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, maxlen = 100, filter_sizes = {2, 3, 4, 5}, use_fasttext = False, trainable = True, use_additive_emb = False):
+    if use_fasttext:
+        inp = Input(shape=(maxlen, embed_size))
+        x = inp
+    else:
+        inp = Input(shape = (maxlen, ))
+        x = Embedding(input_dim = max_features, output_dim = embed_size, weights = [embeddingMatrix], trainable = trainable)(inp)
 
     if use_additive_emb:
         x = AdditiveLayer()(x)
         x = Dropout(0.5)(x)
+
+    x = Bidirectional(CuDNNLSTM(128, return_sequences = True))(x)
 
 
     conv_ops = []

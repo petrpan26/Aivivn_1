@@ -171,7 +171,7 @@ def sent_tokenize(texts):
             text_tokenized.append([])
         docs.append(text_tokenized)
 
-    return np.array(docs)
+    return docs
 
 
 def sent_embedding(tokenized_texts, embedding_path, max_features):

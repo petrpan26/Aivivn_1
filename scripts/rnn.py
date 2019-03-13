@@ -158,7 +158,7 @@ def SARNNKeras(embeddingMatrix = None, embed_size = 400, max_features = 20000, m
 
 
 def HRNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, trainable = True, use_additive_emb = False):
-    sent_inp = Input(shape = (max_sent_len, ))
+    sent_inp = Input(shape = (max_sent_len, embed_size))
     embed = Embedding(
         input_dim = max_features,
         output_dim = embed_size,
@@ -182,7 +182,7 @@ def HRNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_
     return model
 
 def HRNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, trainable = True, use_additive_emb = False):
-    sent_inp = Input(shape = (max_sent_len, ))
+    sent_inp = Input(shape = (max_sent_len, embed_size))
     embed = Embedding(
         input_dim = max_features,
         output_dim = embed_size,
@@ -206,14 +206,18 @@ def HRNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_
     return model
 
 
-def OriginalHARNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, trainable = True, use_additive_emb = False):
-    sent_inp = Input(shape = (max_sent_len, ))
-    embed = Embedding(
-        input_dim = max_features,
-        output_dim = embed_size,
-        weights = [embeddingMatrix],
-        trainable = trainable
-    )(sent_inp)
+def OriginalHARNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, use_fasttext = False, trainable = True, use_additive_emb = False):
+    if use_fasttext:
+        sent_inp = Input(shape = (max_sent_len, embed_size))
+        embed = sent_inp
+    else:
+        sent_inp = Input(shape = (max_sent_len, ))
+        embed = Embedding(
+            input_dim = max_features,
+            output_dim = embed_size,
+            weights = [embeddingMatrix],
+            trainable = trainable
+        )(sent_inp)
 
     if use_additive_emb:
         embed = AdditiveLayer()(embed)
@@ -232,14 +236,18 @@ def OriginalHARNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20
     model.compile(loss = 'binary_crossentropy', optimizer = 'adam', metrics = ['accuracy', f1])
     return model
 
-def OriginalHARNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, trainable = True, use_additive_emb = False):
-    sent_inp = Input(shape = (max_sent_len, ))
-    embed = Embedding(
-        input_dim = max_features,
-        output_dim = embed_size,
-        weights = [embeddingMatrix],
-        trainable = trainable
-    )(sent_inp)
+def OriginalHARNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, use_fasttext = False, trainable = True, use_additive_emb = False):
+    if use_fasttext:
+        sent_inp = Input(shape = (max_sent_len, embed_size))
+        embed = sent_inp
+    else:
+        sent_inp = Input(shape = (max_sent_len, ))
+        embed = Embedding(
+            input_dim = max_features,
+            output_dim = embed_size,
+            weights = [embeddingMatrix],
+            trainable = trainable
+        )(sent_inp)
 
     if use_additive_emb:
         embed = AdditiveLayer()(embed)
@@ -263,14 +271,18 @@ def OriginalHARNN(embeddingMatrix = None, embed_size = 400, max_features = 20000
 
 
 
-def HARNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, trainable = True, use_additive_emb = False):
-    sent_inp = Input(shape = (max_sent_len, ))
-    embed = Embedding(
-        input_dim = max_features,
-        output_dim = embed_size,
-        weights = [embeddingMatrix],
-        trainable = trainable
-    )(sent_inp)
+def HARNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, use_fasttext = False, trainable = True, use_additive_emb = False):
+    if use_fasttext:
+        sent_inp = Input(shape = (max_sent_len, embed_size))
+        embed = sent_inp
+    else:
+        sent_inp = Input(shape = (max_sent_len, ))
+        embed = Embedding(
+            input_dim = max_features,
+            output_dim = embed_size,
+            weights = [embeddingMatrix],
+            trainable = trainable
+        )(sent_inp)
 
     if use_additive_emb:
         embed = AdditiveLayer()(embed)
@@ -292,14 +304,18 @@ def HARNNCPU(embeddingMatrix = None, embed_size = 400, max_features = 20000, max
 
 
 
-def HARNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, trainable = True, use_additive_emb = False):
-    sent_inp = Input(shape = (max_sent_len, ))
-    embed = Embedding(
-        input_dim = max_features,
-        output_dim = embed_size,
-        weights = [embeddingMatrix],
-        trainable = trainable
-    )(sent_inp)
+def HARNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb_sent = 3, max_sent_len = 40, use_fasttext = False, trainable = True, use_additive_emb = False):
+    if use_fasttext:
+        sent_inp = Input(shape = (max_sent_len, embed_size))
+        embed = sent_inp
+    else:
+        sent_inp = Input(shape = (max_sent_len, ))
+        embed = Embedding(
+            input_dim = max_features,
+            output_dim = embed_size,
+            weights = [embeddingMatrix],
+            trainable = trainable
+        )(sent_inp)
 
     if use_additive_emb:
         embed = AdditiveLayer()(embed)
