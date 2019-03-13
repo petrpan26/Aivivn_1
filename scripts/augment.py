@@ -58,10 +58,8 @@ def similar_augment(texts, labels, n_increase, n_word_replace, model_path, simil
                     word, topn = 2,
                     indexer = indexer if use_annoy else None
                 )[1]
-                # if score > similar_threshold:
-                print(word)
-                print(closest)
-                text_copy[word_ind] = closest
+                if score > similar_threshold:
+                    text_copy[word_ind] = closest
             except:
                 continue
 
