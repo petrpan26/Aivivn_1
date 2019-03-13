@@ -49,7 +49,7 @@ def train_model(
             model_path = embedding_path,
             n_word_replace = 3,
             use_annoy=True,
-            annoy_path="./data/annoy.pkl"
+            annoy_path=annoy_path
         )
 
 
