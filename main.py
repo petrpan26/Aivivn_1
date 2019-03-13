@@ -32,7 +32,7 @@ def train_model(
     labels = train_data['label'].values.astype(np.float16).reshape(-1, 1)
 
     train_tokenized_texts, val_tokenized_texts, labels_train, labels_val = train_test_split(
-        train_tokenized_texts, labels, test_data = 0.05
+        train_tokenized_texts, labels, test_size = 0.05
     )
 
 
