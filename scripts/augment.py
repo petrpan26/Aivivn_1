@@ -1,4 +1,6 @@
 import numpy as np
+from gensim.models import KeyedVectors
+import copy
 
 def shuffle_augment(texts, labels, n_increase, min_length = 1):
     texts_long = []
@@ -22,3 +24,29 @@ def shuffle_augment(texts, labels, n_increase, min_length = 1):
 
 
     return texts, labels
+
+
+def similar_augment(texts, labels, n_increase, n_word_replace, model_path, similar_threshold = 0.5):
+    w2v = KeyedVectors.load_word2vec_format(model_path, binary=True)
+
+    shuffle_ind = np.random.choice(len(texts), size = n_increase)
+    for ind in shuffle_ind:
+        text_copy = copy.deepcopy(texts[ind])
+        # if is_hier:
+
+        replace_inds = np.random.choice(text_copy.shape[-1], size = n_word_replace, replace = False)
+        for word_ind in replace_inds:
+            word = text_copy[word_ind]
+            try:
+                closest, score = w2v.wv.most_similar(word)[0]
+                if score > similar_threshold:
+                    text_copy[word_ind] = closest
+            except:
+                continue
+
+        texts.append(text_copy)
+        labels = np.append(labels, [labels[ind]])
+
+    return texts, labels
+
+

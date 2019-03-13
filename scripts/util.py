@@ -52,7 +52,7 @@ def tokenize(texts):
         tokens = np.array([postprocess_token(token.text) for token in nlp(text.lower())[1:-1]])
         docs.append(tokens)
 
-    return np.array(docs)
+    return docs
 
 
 def postprocess_token(token):
