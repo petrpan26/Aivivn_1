@@ -33,6 +33,7 @@ def train_model(
     )
 
     augment_size = int(augment_size)
+    aug_min_len = int(aug_min_len)
     if augment_size != 0:
         if augment_size < 0:
             augment_size = len(train_tokenized_texts) * (-augment_size)
