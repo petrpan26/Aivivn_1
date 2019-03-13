@@ -47,7 +47,7 @@ def train_model(
             labels_train,
             n_increase = augment_size,
             model_path = embedding_path,
-            n_word_replace = 3,
+            n_word_replace = 6,
             use_annoy=True,
             annoy_path=annoy_path
         )

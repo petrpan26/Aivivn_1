@@ -65,11 +65,6 @@ def similar_augment(texts, labels, n_increase, n_word_replace, model_path, simil
 
         texts.append(text_copy)
         labels = np.append(labels, [labels_long[ind]])
-        if (ind % 100 == 0):
-            print(text_copy)
-            print(texts_long[ind])
-            print(labels_long[ind])
-            print()
 
     return texts, labels
 
