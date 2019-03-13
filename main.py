@@ -11,14 +11,14 @@ import numpy as np
 import datetime
 import pandas as pd
 from scripts.util import find_threshold
-from scripts.augment import similar_augment
+from scripts.augment import similar_augment, create_sim_dict, similar_augment_from_sim_dict
 from sklearn.metrics import f1_score
 
 
 def train_model(
         model, embedding_path, annoy_path,
         max_features, should_find_threshold, should_mix,
-        return_prob, trainable, use_additive_emb, augment_size
+        return_prob, trainable, use_additive_emb, augment_size, use_sym_dict
 ):
     model_name = '-'.join(
         '.'.join(str(datetime.datetime.now()).split('.')[:-1]).split(' '))
@@ -36,7 +36,7 @@ def train_model(
     )
 
 
-    if augment_size != 0:
+    if augment_size != 0 and not use_sym_dict:
         if augment_size < 0:
             augment_size = len(train_tokenized_texts) * (-augment_size)
 
@@ -61,6 +61,17 @@ def train_model(
     )
 
     texts_id_train = text_to_sequences(train_tokenized_texts, word_map)
+
+    if augment_size != 0 and use_sym_dict:
+        if augment_size < 0:
+            augment_size = len(train_tokenized_texts) * (-augment_size)
+        sim_dict = create_sim_dict(word_map, model_path = embedding_path, annoy_path  = annoy_path)
+        print("Finish Creating sim dict")
+        texts_id_train, labels_train = similar_augment_from_sim_dict(
+            texts_id_train, labels_train, sim_dict,
+            n_increase = augment_size
+        )
+
     texts_id_val = text_to_sequences(val_tokenized_texts, word_map)
     print('Number of train data: {}'.format(labels.shape))
 
@@ -172,6 +183,11 @@ if __name__ == '__main__':
         default=0
     )
     parser.add_argument(
+        '--use_sim_dict',
+        action='store_true',
+        help='Model use'
+    )
+    parser.add_argument(
         '--find_threshold',
         action='store_true',
         help='Model use'
@@ -200,4 +216,4 @@ if __name__ == '__main__':
     if not args.model in model_dict:
         raise RuntimeError('Model not found')
     train_model(model_dict[args.model], args.embedding, args.annoy,
-                int(args.max), args.find_threshold, args.mix, args.prob, args.fix_embed, args.add_embed, args.aug)
+                int(args.max), args.find_threshold, args.mix, args.prob, args.fix_embed, args.add_embed, args.aug, args.use_sym_dict)
