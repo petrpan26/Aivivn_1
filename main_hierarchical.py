@@ -39,7 +39,7 @@ def train_model(
 
         print(augment_size)
 
-        train_tokenized_texts, labels = shuffle_augment(
+        train_tokenized_texts, labels_train = shuffle_augment(
             train_tokenized_texts,
             labels_train,
             n_increase = augment_size
