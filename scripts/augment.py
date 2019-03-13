@@ -1,6 +1,8 @@
 import numpy as np
 from gensim.models import KeyedVectors
 import copy
+from gensim.similarities.index import AnnoyIndexer
+
 
 def shuffle_augment(texts, labels, n_increase, min_length = 1):
     texts_long = []
@@ -26,10 +28,16 @@ def shuffle_augment(texts, labels, n_increase, min_length = 1):
     return texts, labels
 
 
-def similar_augment(texts, labels, n_increase, n_word_replace, model_path, similar_threshold = 0.5):
+def similar_augment(texts, labels, n_increase, n_word_replace, model_path, similar_threshold = 0.5, use_annoy = True, annoy_path = None):
     w2v = KeyedVectors.load_word2vec_format(model_path, binary=True)
     texts_long = []
     labels_long = []
+    if use_annoy:
+        if annoy_path is None:
+            indexer = AnnoyIndexer(w2v, 100)
+        else:
+            indexer = AnnoyIndexer()
+            indexer.load(annoy_path)
 
     for ind in range(len(texts)):
         if len(texts[ind]) >= n_word_replace:
@@ -45,7 +53,11 @@ def similar_augment(texts, labels, n_increase, n_word_replace, model_path, simil
         for word_ind in replace_inds:
             word = text_copy[word_ind]
             try:
-                closest, score = w2v.wv.most_similar(word)[0]
+
+                closest, score = w2v.wv.most_similar(
+                    word, topn = 1,
+                    indexer = indexer if use_annoy else None
+                )[0]
                 if score > similar_threshold:
                     text_copy[word_ind] = closest
             except:

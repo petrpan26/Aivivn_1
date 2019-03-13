@@ -16,7 +16,7 @@ from sklearn.metrics import f1_score
 
 
 def train_model(
-        model, embedding_path,
+        model, embedding_path, annoy_path,
         max_features, should_find_threshold, should_mix,
         return_prob, trainable, use_additive_emb, augment_size
 ):
@@ -47,7 +47,9 @@ def train_model(
             labels_train,
             n_increase = augment_size,
             model_path = embedding_path,
-            n_word_replace = 3
+            n_word_replace = 3,
+            use_annoy=True,
+            annoy_path="./data/annoy.pkl"
         )
 
 
@@ -154,6 +156,12 @@ if __name__ == '__main__':
         default='./embeddings/smallFasttext.vi.vec'
     )
     parser.add_argument(
+        '-e',
+        '--annoy',
+        help='Model use',
+        default='./embeddings/annoy.pkl'
+    )
+    parser.add_argument(
         '--max',
         help='Model use',
         default=DEFAULT_MAX_FEATURES
@@ -191,5 +199,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if not args.model in model_dict:
         raise RuntimeError('Model not found')
-    train_model(model_dict[args.model], args.embedding,
+    train_model(model_dict[args.model], args.embedding, args.annoy,
                 int(args.max), args.find_threshold, args.mix, args.prob, args.fix_embed, args.add_embed, args.aug)
