@@ -80,7 +80,7 @@ def make_embedding(texts, embedding_path, max_features):
             embedding_path, binary=True)
         mean_embedding = np.mean(embedding_index.vectors, axis=0)
     embed_size = mean_embedding.shape[0]
-    word_index = {word.lower() for sentence in texts for word in sentence}
+    word_index = sorted(list({word.lower() for sentence in texts for word in sentence}))
     nb_words = min(max_features, len(word_index))
     embedding_matrix = np.zeros((nb_words + 1, embed_size))
     i = 1
@@ -94,6 +94,7 @@ def make_embedding(texts, embedding_path, max_features):
             embedding_matrix[i] = mean_embedding
         word_map[word] = i
         i += 1
+    
     embedding_matrix[-1] = mean_embedding
     return embed_size, word_map, embedding_matrix
 

@@ -9,6 +9,7 @@ from keras_self_attention import SeqSelfAttention, SeqWeightedAttention
 from keras.activations import softmax
 from keras_layer_normalization import LayerNormalization
 from .net_components import AttLayer, AdditiveLayer
+from keras.utils.vis_utils import plot_model
 
 
 
@@ -325,6 +326,8 @@ def HARNN(embeddingMatrix = None, embed_size = 400, max_features = 20000, max_nb
     word_att = SeqWeightedAttention()(word_lstm)
     word_att = Dropout(0.5)(word_att)
     sent_encoder = Model(sent_inp, word_att)
+    plot_model(sent_encoder, to_file='{}.png'.format("HARNN1"), show_shapes=True, show_layer_names=True)
+
 
     doc_input = Input(shape = (max_nb_sent, max_sent_len))
     doc_encoder = TimeDistributed(sent_encoder)(doc_input)

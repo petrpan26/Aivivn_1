@@ -13,12 +13,14 @@ import pandas as pd
 from scripts.util import find_threshold
 from scripts.augment import similar_augment, create_sim_dict, similar_augment_from_sim_dict
 from sklearn.metrics import f1_score
+from keras.utils.vis_utils import plot_model
 
 
 def train_model(
         model, embedding_path, annoy_path,
         max_features, should_find_threshold, should_mix,
-        return_prob, trainable, use_additive_emb, augment_size, use_sim_dict
+        return_prob, trainable, use_additive_emb, augment_size, use_sim_dict,
+        print_model, model_high
 ):
     model_name = '-'.join(
         '.'.join(str(datetime.datetime.now()).split('.')[:-1]).split(' '))
@@ -107,6 +109,9 @@ def train_model(
         trainable = trainable,
         use_additive_emb = use_additive_emb
     )
+    if print_model:
+        plot_model(model, to_file='{}.png'.format(model_high), show_shapes=True, show_layer_names=True)
+        return
     model.fit(
         texts_id_train, labels_train,
         validation_data=(texts_id_val, labels_val),
@@ -212,8 +217,14 @@ if __name__ == '__main__':
         action='store_true',
         help='Model use'
     )
+    parser.add_argument(
+        '--print_model',
+        action='store_true',
+        help='Model use'
+    )
     args = parser.parse_args()
     if not args.model in model_dict:
         raise RuntimeError('Model not found')
     train_model(model_dict[args.model], args.embedding, args.annoy,
-                int(args.max), args.find_threshold, args.mix, args.prob, args.fix_embed, args.add_embed, args.aug, args.use_sim_dict)
+                int(args.max), args.find_threshold, args.mix, args.prob, args.fix_embed, args.add_embed, args.aug,
+                args.use_sim_dict, args.print_model, args.model)
