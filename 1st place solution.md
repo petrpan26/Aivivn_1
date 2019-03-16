@@ -63,7 +63,6 @@
 <li>Xáo các câu trong HARNN model để có thể generate được nhiều document khác nhau.</li>
 <li>Dịch từ tiếng Việt sang các thứ tiếng khác và dịch ngược lại. Mà giờ Google Translate ban cái này rồi ;__;</li>
 </ol>
-<ul>
-<li></li>
-</ul>
+<h2 id="kết">Kết:</h2>
+<p>Một lần nữa cảm ơn BTC và chúc mừng các bạn đã hoàn thành một cái Datathon đầu tiên của Aivivn. Hi vọng những contest trong tương lại sẽ càng nhiều người ủng hộ hơn và cũng sẽ có nhiều discussion trong và ngoài contest hơn vì bọn mình thấy có vẻ thiếu những thảo luận về baseline model lúc thi.</p>
 
