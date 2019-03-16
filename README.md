@@ -20,3 +20,9 @@ cd ..
 ```
 Notebook test link:
 https://colab.research.google.com/drive/1fgtIYXkXKKmZVI2w62nCI22wiVSNEQxw
+
+Sample run command:
+
+```bash
+python -m main -m VDCNN -e ./embeddings/baomoi.model.bin --max 40000 --mix --prob
+```
