@@ -20,9 +20,13 @@
 <p>Tụi mình chủ yếu train model ở trên Google Colab và sử dụng GPU của Colab. Thời gian train mỗi model khoảng từ 1-2 tiếng.</p>
 <h2 id="chi-tiết-solution">Chi tiết solution:</h2>
 <h3 id="models">1.  Models:</h3>
-<h4 id="textcnn">1.1 TextCNN</h4>
-<h4 id="vdcnn">1.2 VDCNN</h4>
-<h4 id="harnn">1.3 HARNN</h4>
-<h4 id="sarnn">1.4 SARNN</h4>
+<h4 id="textcnn">1.1 TextCNN:</h4>
+<p><img src="https://imgur.com/TaEIrPx.png" alt="TextCNN"></p>
+<h4 id="vdcnn">1.2 VDCNN:</h4>
+<p><img src="https://imgur.com/CVPVvd3.png" alt="VDCNN"></p>
+<h4 id="harnn">1.3 HARNN:</h4>
+<p><img src="https://imgur.com/ELAREeE.png" alt="VDCNN"></p>
+<h4 id="sarnn">1.4 SARNN:</h4>
+<p><img src="https://imgur.com/qpF9tPR.png" alt="VDCNN"></p>
 <h3 id="ensemble">2. Ensemble:</h3>
 
