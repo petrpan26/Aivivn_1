@@ -1,78 +1,84 @@
-from scripts.util import read_file, tokenize, make_embedding, text_to_sequences
-from scripts.rnn import RNNKeras
+from scripts.util import read_file, sent_tokenize, sent_embedding, text_sents_to_sequences
 from scripts.constant import DEFAULT_MAX_FEATURES
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from scripts.rnn import RNNKeras, RNNKerasCPU, LSTMKeras, SARNNKerasCPU, SARNNKeras
-from scripts.cnn import TextCNN, LSTMCNN, VDCNN
+from scripts.rnn import HRNN, HRNNCPU, OriginalHARNN, OriginalHARNNCPU, HARNN, HARNNCPU
 import argparse
 import os
 import numpy as np
 import datetime
 import pandas as pd
 from scripts.util import find_threshold
-from scripts.augment import similar_augment, create_sim_dict, similar_augment_from_sim_dict
+from scripts.augment import shuffle_augment
 from sklearn.metrics import f1_score
 
 
 def train_model(
-        model, embedding_path, annoy_path,
-        max_features, should_find_threshold, should_mix,
-        return_prob, trainable, use_additive_emb, augment_size, use_sim_dict
+        model, embedding_path,
+        max_features, max_nb_sent, max_sent_len,
+        should_find_threshold, should_mix,
+        return_prob, trainable, use_additive_emb, augment_size, aug_min_len
 ):
     model_name = '-'.join(
         '.'.join(str(datetime.datetime.now()).split('.')[:-1]).split(' '))
 
-    augment_size = int(augment_size)
-
     train_data = read_file('./data/train.crash')
     test_data = read_file('./data/test.crash', is_train=False)
-    train_tokenized_texts = tokenize(train_data['text'])
-    test_tokenizes_texts = tokenize(test_data['text'])
+    train_tokenized_texts = sent_tokenize(train_data['text'])
+    test_tokenizes_texts = sent_tokenize(test_data['text'])
     labels = train_data['label'].values.astype(np.float16).reshape(-1, 1)
 
     train_tokenized_texts, val_tokenized_texts, labels_train, labels_val = train_test_split(
-        train_tokenized_texts, labels, test_size = 0.05
+        train_tokenized_texts, labels, test_size=0.05
     )
 
+    augment_size = int(augment_size)
+    aug_min_len = int(aug_min_len)
+    max_nb_sent = int(max_nb_sent)
+    max_sent_len = int(max_sent_len)
 
-    if augment_size != 0 and not use_sim_dict:
+    if augment_size != 0:
         if augment_size < 0:
             augment_size = len(train_tokenized_texts) * (-augment_size)
 
         print(augment_size)
 
-        train_tokenized_texts, labels_train = similar_augment(
+        train_tokenized_texts, labels_train = shuffle_augment(
             train_tokenized_texts,
             labels_train,
             n_increase = augment_size,
-            model_path = embedding_path,
-            n_word_replace = 10,
-            use_annoy=True,
-            annoy_path=annoy_path
+            min_length = aug_min_len
         )
 
-
-    embed_size, word_map, embedding_mat = make_embedding(
+    embed_size, word_map, embedding_mat = sent_embedding(
         list(train_tokenized_texts) + list(val_tokenized_texts) +
-        list(test_tokenizes_texts) if should_mix else list(train_tokenized_texts) + list(val_tokenized_texts),
+        list(test_tokenizes_texts) if should_mix
+        else list(train_tokenized_texts) + list(val_tokenized_texts),
         embedding_path,
         max_features
     )
 
-    texts_id_train = text_to_sequences(train_tokenized_texts, word_map)
+    texts_id_train = text_sents_to_sequences(
+        train_tokenized_texts,
+        word_map,
+        max_nb_sent = max_nb_sent,
+        max_sent_len = max_sent_len
+    )
 
-    if augment_size != 0 and use_sim_dict:
-        if augment_size < 0:
-            augment_size = len(train_tokenized_texts) * (-augment_size)
-        sim_dict = create_sim_dict(word_map, model_path = embedding_path, annoy_path  = annoy_path)
-        print("Finish Creating sim dict")
-        texts_id_train, labels_train = similar_augment_from_sim_dict(
-            texts_id_train, labels_train, sim_dict,
-            n_increase = augment_size
-        )
+    texts_id_val = text_sents_to_sequences(
+        val_tokenized_texts,
+        word_map,
+        max_nb_sent = max_nb_sent,
+        max_sent_len = max_sent_len
+    )
 
-    texts_id_val = text_to_sequences(val_tokenized_texts, word_map)
+
+    # texts_id = text_sents_to_sequences(
+    #     train_tokenized_texts,
+    #     word_map,
+    #     max_nb_sent = max_nb_sent,
+    #     max_sent_len = max_sent_len
+    # )
     print('Number of train data: {}'.format(labels.shape))
 
     # texts_id_train, texts_id_val, labels_train, labels_val = train_test_split(
@@ -104,6 +110,8 @@ def train_model(
         embeddingMatrix=embedding_mat,
         embed_size=embed_size,
         max_features=embedding_mat.shape[0],
+        max_nb_sent = max_nb_sent,
+        max_sent_len = max_sent_len,
         trainable = trainable,
         use_additive_emb = use_additive_emb
     )
@@ -117,6 +125,7 @@ def train_model(
 
     model.load_weights('{}/models.hdf5'.format(model_path))
     prediction_prob = model.predict(texts_id_val)
+
     if should_find_threshold:
         OPTIMAL_THRESHOLD = find_threshold(prediction_prob, labels_val)
     else:
@@ -127,29 +136,32 @@ def train_model(
     with open('{}/f1'.format(model_path), 'w') as fp:
         fp.write(str(f1_score(prediction, labels_val)))
 
-    test_id_texts = text_to_sequences(test_tokenizes_texts, word_map)
+    test_id_texts = text_sents_to_sequences(
+        test_tokenizes_texts,
+        word_map,
+        max_nb_sent = max_nb_sent,
+        max_sent_len = max_sent_len
+    )
     test_prediction = model.predict(test_id_texts)
 
     df_predicton = pd.read_csv("./data/sample_submission.csv")
+
     if return_prob:
         df_predicton["label"] = test_prediction
     else:
         df_predicton["label"] = (
             test_prediction > OPTIMAL_THRESHOLD).astype(np.int8)
-
     print('Number of test data: {}'.format(df_predicton.shape[0]))
     df_predicton.to_csv('{}/prediction.csv'.format(model_path), index=False)
 
 
 model_dict = {
-    'RNNKeras': RNNKeras,
-    'RNNKerasCPU': RNNKerasCPU,
-    'LSTMKeras': LSTMKeras,
-    'SARNNKerasCPU': SARNNKerasCPU,
-    'SARNNKeras': SARNNKeras,
-    'TextCNN': TextCNN,
-    'LSTMCNN': LSTMCNN,
-    'VDCNN': VDCNN
+    'HRNN': HRNN,
+    'HRNNCPU': HRNNCPU,
+    'HARNN': HARNN,
+    'HARNNCPU': HARNNCPU,
+    'OriginalHARNN': OriginalHARNN,
+    'OriginalHARNNCPU':OriginalHARNNCPU
 }
 
 if __name__ == '__main__':
@@ -158,7 +170,7 @@ if __name__ == '__main__':
         '-m',
         '--model',
         help='Model use',
-        default='RNNKerasCPU'
+        default='HRNN'
     )
     parser.add_argument(
         '-e',
@@ -167,15 +179,19 @@ if __name__ == '__main__':
         default='./embeddings/smallFasttext.vi.vec'
     )
     parser.add_argument(
-        '-annoy',
-        '--annoy',
-        help='Model use',
-        default='./embeddings/annoy.pkl'
-    )
-    parser.add_argument(
         '--max',
         help='Model use',
         default=DEFAULT_MAX_FEATURES
+    )
+    parser.add_argument(
+        '--nb_sent',
+        help='Model use',
+        default=3
+    )
+    parser.add_argument(
+        '--sent_len',
+        help='Model use',
+        default=50
     )
     parser.add_argument(
         '--aug',
@@ -183,9 +199,9 @@ if __name__ == '__main__':
         default=0
     )
     parser.add_argument(
-        '--use_sim_dict',
-        action='store_true',
-        help='Model use'
+        '--aug_min_len',
+        help='Model use',
+        default=1
     )
     parser.add_argument(
         '--find_threshold',
@@ -215,5 +231,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if not args.model in model_dict:
         raise RuntimeError('Model not found')
-    train_model(model_dict[args.model], args.embedding, args.annoy,
-                int(args.max), args.find_threshold, args.mix, args.prob, args.fix_embed, args.add_embed, args.aug, args.use_sim_dict)
+    train_model(
+        model_dict[args.model], args.embedding,
+        int(args.max), args.nb_sent, args.sent_len,
+        args.find_threshold, args.mix, args.prob,
+        args.fix_embed, args.add_embed, args.aug, args.aug_min_len
+    )
