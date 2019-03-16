@@ -18,7 +18,7 @@
 <ul>
 <li>word2vecVN (window-size 5, 400dims) <a href="https://github.com/sonvx/word2vecVN">source</a></li>
 </ul>
-<p>Tụi mình chủ yếu train model ở trên Google Colab và sử dụng GPU của Colab. Thời gian train mỗi model khoảng từ 1-2 tiếng.</p>
+<p>Tụi mình chủ yếu train model ở trên Google Colab và sử dụng GPU của Colab. Thời gian train mỗi model khoảng từ 10 - 20 phút (model converge sau khoảng 5-10 epochs). Những model CNN thì train  nhanh hơn những model RNN rất nhiều vì có thể nó không phải là sequential model nên nó tận dụng được GPU tốt hơn lúc train.</p>
 <h2 id="chi-tiết-cách-làm">Chi tiết cách làm:</h2>
 <h3 id="models">1.  Models:</h3>
 <h4 id="textcnn">1.1 TextCNN:</h4>
@@ -46,4 +46,24 @@
 <p><img src="https://imgur.com/qpF9tPR.png" alt="VDCNN"></p>
 <h3 id="combine-models">2. Combine models:</h3>
 <p>Bọn mình đã thử những cách kết hợp các models như Stacking and Ensembling nhưng thấy Ensembling đưa ra được kết quả khả quan nhất. Về cách lựa chọn weight thì bọn mình đã dựa vào model nào có kết quả tốt nhất trên Public LB và cho model đó weight cao nhất. Bọn mình để nguyên probability và chọn threshold là 0.5 chứ không tìm threshold vì không thấy được kết quả tăng nhiều.</p>
+<h2 id="ngoài-lề">Ngoài lề:</h2>
+<h3 id="khó-khăn">Khó khăn:</h3>
+<ul>
+<li>Có lẽ vấn đề đâu tiên hai đứa gặp phải là vấn đề máy móc. Do hai chiếc máy Macbook 128gb (1 Air, 1 Pro) nên hai đứa không đứa nào đủ chỗ để tải pretrained model về thử mỗi lần tải một cái phải xoá cái cũ đi. Mãi sau này tụi mình chuyển mọi thứ lên Google Colab và Github thì mọi thứ mới bắt đầu nhanh và dễ hơn. Nên bọn mình khuyên các bạn nên xài Google Colab hoặc Kaggle Instance.</li>
+<li>Bọn mình gặp nhiều vấn đề với việc reproduce được kết quả với hai lý do. Hàm save_weight của Keras có rất nhiều vấn đề và sau khi load lại thì hầu như model bị hư + trong lúc xử lý có nhiều thứ việc bị undeterministic (Python set, keras model). Model đầu tiên trên 0.9 của tui mình cũng là do chạy lại một model cũ mà thành xD.<br>
+<img src="https://cdn-images-1.medium.com/freeze/max/1000/1*wdSexjsOvnksIWNq3MeXhw.jpeg?q=20" alt=""></li>
+</ul>
+<h3 id="những-cách-tiếp-cận-bọn-mình-đã-thử">Những cách tiếp cận bọn mình đã thử:</h3>
+<ul>
+<li>Dùng Language Model như Elmo <a href="https://github.com/HIT-SCIR/ELMoForManyLangs">(source)</a>. Approach này có vẻ không phù hợp vì thời gian train quá lâu (thời gian train một epoch bằng thời gian train một model CNN hoặc RNN) và bọn mình cũng không có thời gian để preprocess data lại cho đúng format của Elmo.</li>
+<li>Một vấn đề mà bọn mình đã thấy là về việc lượng data không đủ để có thể làm model có thể vượt qua được mức 0.89 - 0.9. Bọn mình đã thử một số cách để augment ra data mới như:</li>
+</ul>
+<ol>
+<li>Thay ngẫu nhiên những từ trong câu bằng từ đồng nghĩa. Bọn mình làm điều này bằng cách thay mỗi từ bằng từ có word embeddings gần nó nhất trong từ điển của bọn mình (Nearest neighbor). Mặc dù thay đổi này không mang lại improvement đáng kể nhưng mình nghĩ với thesaurus tốt hoặc metrics chọn vector phù hợp thì sẽ có thể có kết quả tốt.</li>
+<li>Xáo các câu trong HARNN model để có thể generate được nhiều document khác nhau.</li>
+<li>Dịch từ tiếng Việt sang các thứ tiếng khác và dịch ngược lại. Mà giờ Google Translate ban cái này rồi ;__;</li>
+</ol>
+<ul>
+<li></li>
+</ul>
 
