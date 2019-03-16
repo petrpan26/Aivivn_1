@@ -6,7 +6,7 @@ By Nhat Pham and Hoang Phan.
 
 Install environment:
 ```bash
-conda install python=3.5
+conda install python=3.6
 ```
 
 Dependencies guide:
